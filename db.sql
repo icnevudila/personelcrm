@@ -1196,3 +1196,40 @@ create policy "copyfast_storage_delete"
 -- drop/create policy ... (yukarıdaki storage politikaları)
 -- update storage.buckets set file_size_limit = 10485760 where id = 'crm-copyfast';
 
+
+
+-- Deployment hardening: personal CRM records are available only to the owner.
+DO $$
+DECLARE target_table text;
+BEGIN
+  FOREACH target_table IN ARRAY ARRAY['projects', 'project_todos', 'user_goals', 'user_goal_subgoals', 'project_goals', 'project_goal_subgoals', 'project_mvp_features', 'domains', 'site_pages', 'installation_forms', 'update_requests', 'update_request_images', 'site_settings', 'crm_groups', 'crm_customers', 'logo_generations', 'project_db_schemas', 'keyword_groups', 'keyword_group_items', 'keyword_candidates', 'project_keywords', 'keyword_clusters', 'keyword_cluster_items', 'seo_settings', 'keyword_generation_jobs', 'deep_work_tasks', 'deep_work_sessions', 'daily_reviews', 'deep_work_settings', 'marketing_blueprints', 'marketing_channels', 'marketing_content_categories', 'marketing_contents', 'marketing_tasks', 'marketing_weekly_tasks', 'marketing_launch_checklist', 'marketing_competitors', 'marketing_kpis', 'project_blueprints', 'blueprint_features', 'blueprint_success_metrics', 'blueprint_competitors', 'blueprint_tech_stack', 'blueprint_mvp_items', 'project_name_candidates', 'project_slogans', 'telegram_chat_history', 'telegram_sessions', 'telegram_ai_logs', 'user_roadmaps', 'project_roadmaps', 'copyfast_items', 'copyfast_meta']
+  LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', target_table);
+    EXECUTE format('DROP POLICY IF EXISTS personal_crm_owner ON public.%I', target_table);
+    EXECUTE format(
+      'CREATE POLICY personal_crm_owner ON public.%I FOR ALL TO authenticated USING ((select auth.jwt() ->> ''email'') = ''alidduvenci@gmail.com'') WITH CHECK ((select auth.jwt() ->> ''email'') = ''alidduvenci@gmail.com'')',
+      target_table
+    );
+  END LOOP;
+END $$;
+
+alter function public.set_crm_customers_timestamps() set search_path = public, pg_temp;
+
+drop policy if exists "copyfast_storage_select" on storage.objects;
+drop policy if exists "copyfast_storage_insert" on storage.objects;
+drop policy if exists "copyfast_storage_update" on storage.objects;
+drop policy if exists "copyfast_storage_delete" on storage.objects;
+
+create policy "copyfast_storage_select"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'crm-copyfast' and (select auth.jwt() ->> 'email') = 'alidduvenci@gmail.com');
+create policy "copyfast_storage_insert"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'crm-copyfast' and (select auth.jwt() ->> 'email') = 'alidduvenci@gmail.com');
+create policy "copyfast_storage_update"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'crm-copyfast' and (select auth.jwt() ->> 'email') = 'alidduvenci@gmail.com')
+  with check (bucket_id = 'crm-copyfast' and (select auth.jwt() ->> 'email') = 'alidduvenci@gmail.com');
+create policy "copyfast_storage_delete"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'crm-copyfast' and (select auth.jwt() ->> 'email') = 'alidduvenci@gmail.com');
