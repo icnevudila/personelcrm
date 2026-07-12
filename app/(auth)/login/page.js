@@ -16,17 +16,23 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    if (authError) {
-      setError(authError.message === "Invalid login credentials"
-        ? "E-posta veya şifre hatalı."
-        : authError.message);
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) {
+        setError(authError.message === "Invalid login credentials"
+          ? "E-posta veya şifre hatalı."
+          : authError.message);
+        setLoading(false);
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      console.error("Giriş hatası:", err);
+      setError("Giriş yaparken bir teknik hata oluştu: " + (err.message || err));
       setLoading(false);
-      return;
     }
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
