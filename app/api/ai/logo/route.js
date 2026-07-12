@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-];
 
 function buildPrompt(sector, businessName, services, colorPalette, index) {
   const primaryColor = colorPalette?.primary || "#1a1a2e";
