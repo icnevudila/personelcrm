@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai";
 
 export async function POST(req) {
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getAIClient();
     const { business_name, sector, services = [], about_text = "" } = await req.json();
 
     if (!sector) {
@@ -38,7 +38,7 @@ Yanıtı şu JSON formatında ver:
 {"questions": ["Soru 1", "Soru 2", "Soru 3"]}`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: getAIModel("gpt-4o-mini"),
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: systemPrompt },

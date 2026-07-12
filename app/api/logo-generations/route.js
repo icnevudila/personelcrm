@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/isAdmin";
 import {
@@ -77,7 +77,7 @@ export async function POST(request) {
 
   const fullPrompt = `${FIXED_LOGO_PROMPT}\n\nKullanıcı promptu:\n${userPrompt}`;
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = getAIClient();
   let imageBase64;
   try {
     const r = await openai.images.generate({

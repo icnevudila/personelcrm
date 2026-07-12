@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
 
 const REQUIRED_COLOR_KEYS = ["primary", "secondary", "accent", "background", "text"];
@@ -56,7 +56,7 @@ export async function POST(request) {
 
   const { sector, brand_tone, main_goal, project_id } = await request.json();
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = getAIClient();
 
   const prompt = [
     `You are a professional UI/UX designer. Generate 3 distinct color palette suggestions for a ${sector || "business"} website.`,
@@ -70,7 +70,7 @@ export async function POST(request) {
     .join(" ");
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: getAIModel("gpt-4o-mini"),
     messages: [{ role: "user", content: prompt }],
     max_tokens: 400,
     response_format: { type: "json_object" },

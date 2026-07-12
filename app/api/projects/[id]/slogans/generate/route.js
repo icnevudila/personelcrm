@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/isAdmin";
 import { requireProjectAccess, fetchProjectCopyContext } from "@/lib/projectCopy/context";
@@ -51,7 +51,7 @@ export async function POST(request, { params }) {
       headline: "dikkat çekici başlık",
     };
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getAIClient();
 
     const systemPrompt = `Sen yaratıcı bir copywriter'sın.
 Proje bağlamına göre Türkçe ${typeLabels[copy_type]} üret.
@@ -69,7 +69,7 @@ Yanıt YALNIZCA geçerli JSON: {"items":[{"content":"...","notes":"kısa not"}]}
       .join("\n\n");
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: getAIModel("gpt-4o-mini"),
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: systemPrompt },

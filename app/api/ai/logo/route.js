@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai";
 
 // Her varyant için farklı ama kurumsal sembol yaklaşımı
 const VARIANT_STYLES = [
@@ -77,7 +77,7 @@ export async function POST(request) {
     return NextResponse.json({ prompts });
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = getAIClient();
 
   // 3 logo paralel üret (gpt-image-1, her istekten base64 döner)
   let generatedImages;

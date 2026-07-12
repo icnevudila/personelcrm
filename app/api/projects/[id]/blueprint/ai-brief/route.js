@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/isAdmin";
 import { getProjectAccess } from "@/lib/productBlueprint/access";
@@ -46,14 +46,14 @@ export async function POST(request, { params }) {
     const blueprintData = await fetchBlueprintData(supabase, blueprintId);
 
     const payload = buildAiBriefUserPayload(fullProject || project, blueprintData);
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getAIClient();
 
     const userContent = userHint
       ? `${JSON.stringify(payload)}\n\nEk kullanıcı talimatı: ${userHint}`
       : JSON.stringify(payload);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: getAIModel("gpt-4o-mini"),
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: AI_BRIEF_SYSTEM_PROMPT },

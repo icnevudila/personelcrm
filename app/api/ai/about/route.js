@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai";
 
 export async function POST(request) {
 
   const { business_name, sector, services, service_regions, brand_tone, main_goal } =
     await request.json();
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = getAIClient();
 
   const toneMap = {
     formal: "resmi, kurumsal ve güven veren",
@@ -38,7 +38,7 @@ export async function POST(request) {
     .join(" ");
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: getAIModel("gpt-4o-mini"),
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },

@@ -5,7 +5,7 @@ import { buildGroupCombinations, buildLocationKeywords } from "@/lib/keywords/co
 import { expandSeedsAutocomplete } from "@/lib/keywords/autocomplete";
 import { insertKeywordCandidates } from "@/lib/keywords/candidates";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai";
 
 async function loadInstallationContext(supabase, projectId) {
   const { data } = await supabase
@@ -48,7 +48,7 @@ async function runAiKeywords(installation, mode) {
     throw new Error("OPENAI_API_KEY tanımlı değil");
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = getAIClient();
   const services = Array.isArray(installation.services)
     ? installation.services.map((s) => s.name || s).join(", ")
     : "";
@@ -71,7 +71,7 @@ Rakip varyasyonları, soru bazlı, ticari niyet ve blog başlık fırsatları da
 Format: {"keywords":[{"keyword":"...","search_intent":"Commercial|Local|Emergency|Informational|Transactional|Navigational","city":"","district":""}]}`;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: getAIModel("gpt-4o-mini"),
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: system },
@@ -215,9 +215,9 @@ export async function POST(request) {
         return NextResponse.json({ error: "OPENAI_API_KEY tanımlı değil" }, { status: 500 });
       }
 
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const openai = getAIClient();
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: getAIModel("gpt-4o-mini"),
         response_format: { type: "json_object" },
         messages: [
           {
