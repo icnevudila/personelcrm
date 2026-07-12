@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/isAdmin";
 import ArchiveLinkButton from "@/components/ArchiveLinkButton";
 import NewProjectButton from "@/components/NewProjectButton";
+import SyncVercelButton from "@/components/SyncVercelButton";
 import DashboardProjects from "@/components/dashboard/DashboardProjects";
 import DashboardGoals from "@/components/dashboard/DashboardGoals";
 
@@ -55,6 +56,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <ArchiveLinkButton />
+            <SyncVercelButton />
             <NewProjectButton />
           </div>
         </div>
