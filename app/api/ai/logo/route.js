@@ -35,29 +35,12 @@ function buildPrompt(sector, businessName, services, colorPalette, index) {
 }
 
 async function generateWithImagen(prompt) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY tanımlı değil");
-
-  const res = await fetch(`${IMAGEN_API_URL}?key=${apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      prompt: { text: prompt },
-      numberOfImages: 1,
-      outputMimeType: "image/png",
-      aspectRatio: "1:1",
-    }),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Imagen API hatası (${res.status}): ${errText}`);
-  }
-
-  const data = await res.json();
-  const b64 = data?.generatedImages?.[0]?.image?.imageBytes;
-  if (!b64) throw new Error("Imagen boş yanıt döndürdü");
-  return b64;
+  // Use Pollinations AI for free, keyless, fast logo generation
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&private=true`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Görsel sunucusundan yanıt alınamadı");
+  const buffer = await res.arrayBuffer();
+  return Buffer.from(buffer).toString("base64");
 }
 
 async function uploadToStorage(supabase, imageBase64, projectId, index) {
