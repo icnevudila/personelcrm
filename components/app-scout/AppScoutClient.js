@@ -74,12 +74,15 @@ export default function AppScoutClient() {
 
   async function handleAnalyze(e) {
     e.preventDefault();
+    console.log("[AppScoutClient] handleAnalyze started, appName:", appName);
     if (!appName.trim()) return;
 
     setAnalyzing(true);
-    const toastId = toast.loading("Analiz başlatılıyor...");
-
+    let toastId;
     try {
+      toastId = toast.loading("Analiz başlatılıyor...");
+      console.log("[AppScoutClient] Creating analysis entry...");
+
       // 1. Create analysis entry
       const createRes = await fetch("/api/app-scout/analyses", {
         method: "POST",
@@ -91,18 +94,24 @@ export default function AppScoutClient() {
           screenshots,
         }),
       });
-      const createData = await createRes.json();
-      if (!createRes.ok) throw new Error(createData.error);
 
+      console.log("[AppScoutClient] Create response status:", createRes.status);
+      const createData = await createRes.json();
+      if (!createRes.ok) throw new Error(createData.error || "Giriş oluşturulamadı");
+
+      console.log("[AppScoutClient] Analysis entry created, ID:", createData.analysis?.id);
       toast.loading("AI App Store rakiplerini çekiyor ve analiz ediyor...", { id: toastId });
 
       // 2. Perform Gemini + iTunes analysis
       const analyzeRes = await fetch(`/api/app-scout/analyses/${createData.analysis.id}/analyze`, {
         method: "POST",
       });
-      const analyzeData = await analyzeRes.json();
-      if (!analyzeRes.ok) throw new Error(analyzeData.error);
 
+      console.log("[AppScoutClient] Analyze response status:", analyzeRes.status);
+      const analyzeData = await analyzeRes.json();
+      if (!analyzeRes.ok) throw new Error(analyzeData.error || "AI analizi başarısız oldu");
+
+      console.log("[AppScoutClient] Analysis completed successfully:", analyzeData.analysis);
       toast.success("Analiz başarıyla tamamlandı!", { id: toastId });
 
       // Reset form
@@ -115,6 +124,7 @@ export default function AppScoutClient() {
       setSelectedAnalysis(analyzeData.analysis);
       fetchAnalyses();
     } catch (err) {
+      console.error("[AppScoutClient] Error in handleAnalyze:", err);
       toast.error("Analiz başarısız: " + err.message, { id: toastId });
     } finally {
       setAnalyzing(false);
