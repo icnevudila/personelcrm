@@ -17,9 +17,6 @@ export async function POST(request, { params }) {
   const { user, admin } = await getCurrentUser(supabase);
   if (!user) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: "OPENAI_API_KEY tanımlı değil" }, { status: 500 });
-  }
 
   const { project, allowed } = await getProjectAccess(supabase, user, admin, projectId);
   if (!allowed || !project) {

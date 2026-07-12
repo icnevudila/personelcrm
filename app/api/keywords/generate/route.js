@@ -211,9 +211,6 @@ export async function POST(request) {
         return NextResponse.json({ error: "Önce projeye keyword kaydedin" }, { status: 400 });
       }
 
-      if (!process.env.OPENAI_API_KEY) {
-        return NextResponse.json({ error: "OPENAI_API_KEY tanımlı değil" }, { status: 500 });
-      }
 
       const openai = getAIClient();
       const completion = await openai.chat.completions.create({
