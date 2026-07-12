@@ -11,6 +11,7 @@ import {
 } from "@/lib/projectCopy/clientApi";
 import { COPY_TYPES, COPY_TYPE_LABELS } from "@/lib/projectCopy/constants";
 import { FavoriteButton, SourceBadge } from "./copy/ui";
+import PremiumAiLoader from "./PremiumAiLoader";
 
 const inputCls =
   "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100";
@@ -102,6 +103,16 @@ export default function SlogansTab({ projectId }) {
 
   return (
     <div className="space-y-4">
+      <PremiumAiLoader
+        loading={aiLoading}
+        title="AI Metin Üretiyor"
+        steps={[
+          "Marka tonu analiz ediliyor...",
+          "Yaratıcı alternatifler aranıyor...",
+          "Sloganlar ve satış metinleri tasarlanıyor...",
+          "En iyi seçenekler seçilip listeleniyor..."
+        ]}
+      />
       <div>
         <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Slogan & Satış Metinleri</h2>
         <p className="mt-1 text-sm text-zinc-500">

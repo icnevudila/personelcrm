@@ -10,6 +10,7 @@ import {
   sortByFavorite,
 } from "@/lib/projectCopy/clientApi";
 import { FavoriteButton, SourceBadge } from "./copy/ui";
+import PremiumAiLoader from "./PremiumAiLoader";
 
 const inputCls =
   "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100";
@@ -90,6 +91,16 @@ export default function NameFinderTab({ projectId }) {
 
   return (
     <div className="space-y-4">
+      <PremiumAiLoader
+        loading={aiLoading}
+        title="AI İsim Önerileri Arıyor"
+        steps={[
+          "Sektör ve rakip analizi yapılıyor...",
+          "Marka kimliğine uygun kelimeler taranıyor...",
+          "Yaratıcı ve akılda kalıcı isim alternatifleri türetiliyor...",
+          "Kullanılabilirlik ve marka uygunluğu filtreleniyor..."
+        ]}
+      />
       <div>
         <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Proje İsmi Bul</h2>
         <p className="mt-1 text-sm text-zinc-500">
