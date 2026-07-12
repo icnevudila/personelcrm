@@ -1,12 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { getAIClient, getAIModel } from "@/lib/ai";
-
-// Her varyant için farklı ama kurumsal sembol yaklaşımı
-const VARIANT_STYLES = [
-  "Sade ve sektör ile uyumlu bir logo üretmelisin",
-  "Modern bir logo olsun. Karmaşık detaylar oluşturma. Sade ve anlaşılır bir logo olsun. Sektör ile uyumlu bir logo olsun. ",
-  "Png formatına çevirip kullanacağız. Arka plan kaldırılabilir bir logo üretmelisin."
 ];
 
 function buildPrompt(sector, businessName, services, colorPalette, index) {

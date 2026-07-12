@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getAIClient, getAIModel } from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/isAdmin";
+
 import {
   FIXED_LOGO_PROMPT,
   isValidLogoPrompt,
@@ -77,15 +77,30 @@ export async function POST(request) {
 
   const fullPrompt = `${FIXED_LOGO_PROMPT}\n\nKullanıcı promptu:\n${userPrompt}`;
 
-  const openai = getAIClient();
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "GEMINI_API_KEY tanımlı değil" }, { status: 500 });
+  }
+
   let imageBase64;
   try {
-    const r = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt: fullPrompt,
-      size: "1024x1024",
-    });
-    imageBase64 = r.data?.[0]?.b64_json;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instances: [{ prompt: fullPrompt }],
+          parameters: { sampleCount: 1, aspectRatio: "1:1", safetyFilterLevel: "block_few", personGeneration: "dont_allow" },
+        }),
+      }
+    );
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Imagen API (${res.status}): ${errText}`);
+    }
+    const data = await res.json();
+    imageBase64 = data?.predictions?.[0]?.bytesBase64Encoded;
   } catch (e) {
     return NextResponse.json(
       { error: "Görsel üretim hatası: " + (e?.message || "Bilinmeyen hata") },
