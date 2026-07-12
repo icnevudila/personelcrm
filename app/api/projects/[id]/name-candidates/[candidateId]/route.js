@@ -12,27 +12,30 @@ export async function PATCH(request, { params }) {
   const allowed = await requireProjectAccess(supabase, user, admin, projectId);
   if (!allowed) return NextResponse.json({ error: "Erişim yok" }, { status: 403 });
 
-  const body = await request.json();
-  const updates = { updated_at: new Date().toISOString() };
-
-  if (body.name !== undefined) {
-    const name = String(body.name).trim();
-    if (!name) return NextResponse.json({ error: "İsim boş olamaz" }, { status: 400 });
-    updates.name = name;
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
   }
-  if (body.notes !== undefined) updates.notes = body.notes;
-  if (body.is_favorited !== undefined) updates.is_favorited = Boolean(body.is_favorited);
+
+  const updateData = {};
+  if (typeof body.is_favorited === "boolean") {
+    updateData.is_favorited = body.is_favorited;
+  }
+  if (typeof body.notes === "string") {
+    updateData.notes = body.notes;
+  }
 
   const { data, error } = await supabase
     .from("project_name_candidates")
-    .update(updates)
+    .update(updateData)
     .eq("id", candidateId)
     .eq("project_id", projectId)
     .select()
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data) return NextResponse.json({ error: "Kayıt bulunamadı" }, { status: 404 });
   return NextResponse.json(data);
 }
 
@@ -52,5 +55,5 @@ export async function DELETE(request, { params }) {
     .eq("project_id", projectId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ success: true });
 }

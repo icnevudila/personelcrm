@@ -101,15 +101,18 @@ export async function POST(request) {
 
   let uploaded;
   try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const adminSupabase = createAdminClient();
     uploaded = await uploadPngBase64ToPublicBucket({
-      supabase,
+      supabase: adminSupabase,
       bucket,
       base64: imageBase64,
       path,
     });
   } catch (e) {
+    const targetUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "tanımlı değil";
     return NextResponse.json(
-      { error: "Storage yükleme hatası: " + (e?.message || "Bilinmeyen hata") },
+      { error: `Storage yükleme hatası [Target: ${targetUrl}]: ` + (e?.message || "Bilinmeyen hata") },
       { status: 500 }
     );
   }
