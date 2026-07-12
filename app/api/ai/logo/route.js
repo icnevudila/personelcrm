@@ -95,10 +95,8 @@ export async function POST(request) {
   // Storage'a yükle
   let permanentUrls;
   try {
-    const { createAdminClient } = await import("@/lib/supabase/admin");
-    const adminSupabase = createAdminClient();
     permanentUrls = await Promise.all(
-      generatedImages.map((b64, i) => uploadToStorage(adminSupabase, b64, project_id, i))
+      generatedImages.map((b64, i) => uploadToStorage(supabase, b64, project_id, i))
     );
   } catch (err) {
     return NextResponse.json(
