@@ -27,11 +27,39 @@ async function fetchItunesCompetitors(appName) {
   }
 }
 
-async function callGemini(prompt) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY env tanımlı değil');
+async function callAI(prompt) {
+  const groqKey = process.env.GROQ_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
 
-  const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+  if (groqKey) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${groqKey}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Groq API hatası (${res.status}): ${errText}`);
+    }
+
+    const json = await res.json();
+    const rawText = json.choices?.[0]?.message?.content || '{}';
+    return JSON.parse(rawText.trim());
+  }
+
+  if (!geminiKey) throw new Error('Yapay zeka API key (GROQ_API_KEY veya GEMINI_API_KEY) tanımlı değil');
+
+  const res = await fetch(`${GEMINI_API_URL}?key=${geminiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -51,8 +79,6 @@ async function callGemini(prompt) {
 
   const json = await res.json();
   const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-
-  // Strip markdown code fences if present
   const cleaned = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
   return JSON.parse(cleaned);
 }
@@ -112,7 +138,7 @@ Analiz et ve şu JSON formatında cevap ver:
 
 SADECE JSON döndür, başka metin ekleme.`;
 
-    const aiResult = await callGemini(prompt);
+    const aiResult = await callAI(prompt);
 
     // 4 & 5. DB'yi güncelle
     const { data: updated, error: updateError } = await supabase
