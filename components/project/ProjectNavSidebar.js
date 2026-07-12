@@ -192,7 +192,6 @@ const MENU_ITEMS = [
       { key: "blog", label: "Blog" },
     ],
   },
-  // { key: "messages", label: "Mesajlar" },
   { key: "settings", label: "Ayarlar" },
 ];
 
