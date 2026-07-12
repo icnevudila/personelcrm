@@ -65,9 +65,13 @@ export default function DashboardHeader({ user, admin = false }) {
 
   const isDeepWorkActive = pathname?.startsWith("/dashboard/deep-work");
   const isRoadmapActive = pathname?.startsWith("/dashboard/roadmap");
+  const isAppScoutActive = pathname?.startsWith("/dashboard/app-scout");
+  const isMcpActive = pathname?.startsWith("/dashboard/mcp");
   const isProjectsActive =
     !isDeepWorkActive &&
     !isRoadmapActive &&
+    !isAppScoutActive &&
+    !isMcpActive &&
     (pathname === "/dashboard" ||
       pathname?.startsWith("/dashboard/") ||
       pathname?.startsWith("/projects/"));
@@ -227,6 +231,18 @@ export default function DashboardHeader({ user, admin = false }) {
             >
               <RoadmapIcon className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">RoadMap</span>
+            </Link>
+            <Link href="/dashboard/app-scout" className={navLinkClass(isAppScoutActive)} title="App Scout" onClick={() => setUserMenuOpen(false)}>
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+              </svg>
+              <span className="hidden sm:inline">App Scout</span>
+            </Link>
+            <Link href="/dashboard/mcp" className={navLinkClass(isMcpActive)} title="MCP" onClick={() => setUserMenuOpen(false)}>
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>
+              </svg>
+              <span className="hidden sm:inline">MCP</span>
             </Link>
             {admin && (
               <Link
