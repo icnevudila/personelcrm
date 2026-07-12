@@ -101,8 +101,10 @@ export async function POST(request) {
 
   let uploaded;
   try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const adminSupabase = createAdminClient();
     uploaded = await uploadPngBase64ToPublicBucket({
-      supabase,
+      supabase: adminSupabase,
       bucket,
       base64: imageBase64,
       path,
