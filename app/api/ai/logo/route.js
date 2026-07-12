@@ -1,38 +1,63 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+const IMAGEN_API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages";
+
 function buildPrompt(sector, businessName, services, colorPalette, index) {
   const primaryColor = colorPalette?.primary || "#1a1a2e";
   const accentColor = colorPalette?.accent || colorPalette?.secondary || "#4a90d9";
   const bgColor = colorPalette?.background || "#ffffff";
 
-  const serviceHint = Array.isArray(services) && services.length > 0
-    ? `İşletme şu bilgileri paylaştı: ${services.slice(0, 3).map((s) => s.name || s).join(", ")}.`
-    : "";
+  const serviceHint =
+    Array.isArray(services) && services.length > 0
+      ? `Business provides: ${services.slice(0, 3).map((s) => s.name || s).join(", ")}.`
+      : "";
+
+  const variants = [
+    "Minimalist icon-only logo with geometric shapes.",
+    "Modern flat design logo with a bold abstract symbol.",
+    "Clean professional logo with a unique icon mark.",
+  ];
 
   return [
-    // Bağlam
-    `Bu hizmeti veren kurumsal bir firma için logo üreteceksin. Sektör: ${sector || "genel"}. İşletme adı: ${businessName ? ` "${businessName}"` : ""}.`,
+    `Professional corporate logo for a ${sector || "business"} company${businessName ? ` named "${businessName}"` : ""}.`,
     serviceHint,
+    variants[index] || variants[0],
+    `Color palette: primary ${primaryColor}, accent ${accentColor}, on solid ${bgColor} background.`,
+    "Vector style, flat design, clean edges, centered icon.",
+    "NO text, NO letters, NO words, NO numbers, NO initials, NO alphabet characters.",
+    "Single centered icon only. No multiple shapes, no decorative borders, no background patterns.",
+    "High quality, professional, scalable logo design.",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
-    // Varyant
-    // `Tasarım yaklaşımı: ${VARIANT_STYLES[variant]}.`,
+async function generateWithImagen(prompt) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY tanımlı değil");
 
-    // Renk — sadece verilen palet
-    `Sana vereceğim örnek renk paleti ile uyumlu bir logo üretmelisin: primary ${primaryColor} and accent ${accentColor} on a solid ${bgColor} background. No gradients, no transparency, no color blending.`,
+  const res = await fetch(`${IMAGEN_API_URL}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt: { text: prompt },
+      numberOfImages: 1,
+      outputMimeType: "image/png",
+      aspectRatio: "1:1",
+    }),
+  });
 
-    "Sade ve sektör ile uyumlu bir logo üretmelisin",
-    "Modern bir logo olsun. Karmaşık detaylar oluşturma. Sade ve anlaşılır bir logo olsun. Sektör ile uyumlu bir logo olsun. ",
-    "Png formatına çevirip kullanacağız. Arka plan kaldırılabilir bir logo üretmelisin.",
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Imagen API hatası (${res.status}): ${errText}`);
+  }
 
-    "vector style, flat design, svg-like, clean edges, centered icon.",
-
-    // Kesin yasaklar
-    "KESİN YASAKLAR: NO text, NO letters, NO words, NO numbers, NO initials, NO alphabet characters of any language.",
-    "KESİN YASAKLAR: Logo ortada bir ikon benzeri yapıdan oluşmalıdır! Birden fazla kısımlar, birden fazla ikonlar kullanma!",
-    "Tek bir logo görseli olmalıdır! Görseli bölüp içine birden fazla kısım ekleme! Sadece tek merkezi bir görsel üretmelisi!",
-    "KESİN YASAKLAR: NO multiple disconnected shapes, NO decorative borders, NO background patterns.",
-  ].filter(Boolean).join(" ");
+  const data = await res.json();
+  const b64 = data?.generatedImages?.[0]?.image?.imageBytes;
+  if (!b64) throw new Error("Imagen boş yanıt döndürdü");
+  return b64;
 }
 
 async function uploadToStorage(supabase, imageBase64, projectId, index) {
@@ -63,42 +88,32 @@ export async function POST(request) {
     buildPrompt(sector, business_name, services, color_palette, i)
   );
 
-  const preview_only = false;
-  // Prompt kontrolü için: logo üretmeden yalnızca promptları döndür.
-  if (preview_only === true) {
-    return NextResponse.json({ prompts });
+  // 3 logo üret (sırayla)
+  let generatedImages = [];
+  const errors = [];
+
+  for (let i = 0; i < prompts.length; i++) {
+    try {
+      const b64 = await generateWithImagen(prompts[i]);
+      generatedImages.push(b64);
+    } catch (err) {
+      console.error(`[logo] Varyant ${i} hata:`, err.message);
+      errors.push(err.message);
+    }
   }
 
-  const openai = getAIClient();
-
-  // 3 logo paralel üret (gpt-image-1, her istekten base64 döner)
-  let generatedImages;
-  try {
-    const requests = prompts.map((prompt) =>
-      openai.images.generate({
-        model: "gpt-image-1",
-        prompt,
-        size: "1024x1024",
-      })
-    );
-    const responses = await Promise.all(requests);
-    generatedImages = responses.map((r) => r.data?.[0]?.b64_json).filter(Boolean);
-  } catch (err) {
+  if (generatedImages.length === 0) {
     return NextResponse.json(
-      { error: "Görsel üretim hatası: " + err.message },
+      { error: "Görsel üretilemedi: " + errors[0] },
       { status: 500 }
     );
   }
 
-  if (!generatedImages || generatedImages.length === 0) {
-    return NextResponse.json({ error: "Görsel oluşturulamadı" }, { status: 500 });
-  }
-
-  // Her birini Supabase storage'a yükle
+  // Storage'a yükle
   let permanentUrls;
   try {
     permanentUrls = await Promise.all(
-      generatedImages.map((imageBase64, i) => uploadToStorage(supabase, imageBase64, project_id, i))
+      generatedImages.map((b64, i) => uploadToStorage(supabase, b64, project_id, i))
     );
   } catch (err) {
     return NextResponse.json(
