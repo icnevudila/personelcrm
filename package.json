@@ -7,7 +7,9 @@
     "build": "next build",
     "telegram:setup": "node scripts/setup-telegram-webhook.js",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test --experimental-default-type=module tests/automation.test.js",
+    "typecheck": "node --check lib/automation/errors.js && node --check lib/automation/expression.js && node --check lib/automation/schema.js && node --check lib/automation/ai.js && node --check lib/automation/engine.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
