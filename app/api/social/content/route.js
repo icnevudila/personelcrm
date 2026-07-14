@@ -1,0 +1,9 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/isAdmin";
+import { getOrCreatePersonalWorkspace } from "@/lib/automation/workspace";
+import { audit } from "@/lib/automation/persistence";
+
+export const runtime = "nodejs";
+export async function GET() { const db = await createClient(); const { user } = await getCurrentUser(db); if (!user) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 }); try { const workspace = await getOrCreatePersonalWorkspace(user); const { data, error } = await db.from("content_items").select("*").eq("workspace_id", workspace.id).order("scheduled_at", { ascending: true, nullsFirst: false }).limit(100); if (error) throw error; return NextResponse.json({ content: data || [] }); } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); } }
+export async function POST(request) { const db = await createClient(); const { user } = await getCurrentUser(db); if (!user) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 }); try { const body = await request.json(); if (!['x','instagram'].includes(body.platform)) return NextResponse.json({ error: "Platform x veya instagram olmalıdır." }, { status: 400 }); const workspace = await getOrCreatePersonalWorkspace(user); const { data, error } = await db.from("content_items").insert({ workspace_id: workspace.id, platform: body.platform, format: body.format || "post", status: "draft", title: String(body.title || "").slice(0, 160), body: body.body || {}, scheduled_at: body.scheduledAt || null, created_by: user.id }).select().single(); if (error) throw error; await audit({ workspaceId: workspace.id, actorId: user.id, action: "social.content_created", entityType: "content_item", entityId: data.id }); return NextResponse.json({ content: data }, { status: 201 }); } catch (error) { return NextResponse.json({ error: error.message }, { status: 400 }); } }

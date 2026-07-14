@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/isAdmin";
+import { getOrCreatePersonalWorkspace } from "@/lib/automation/workspace";
+
+export const runtime = "nodejs";
+export async function GET() { const db = await createClient(); const { user } = await getCurrentUser(db); if (!user) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 }); try { const workspace = await getOrCreatePersonalWorkspace(user); const { data, error } = await db.from("crm_tables").select("id,name,slug,created_at,crm_fields(id,name,field_type,config,sort_order)").eq("workspace_id", workspace.id).order("created_at"); if (error) throw error; return NextResponse.json({ tables: data || [] }); } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); } }
+export async function POST(request) { const db = await createClient(); const { user } = await getCurrentUser(db); if (!user) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 }); try { const body = await request.json(); const name = String(body.name || "").trim(); const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""); if (!name || !slug) return NextResponse.json({ error: "Geçerli tablo adı zorunlu." }, { status: 400 }); const workspace = await getOrCreatePersonalWorkspace(user); const { data, error } = await db.from("crm_tables").insert({ workspace_id: workspace.id, name, slug, created_by: user.id }).select().single(); if (error) throw error; return NextResponse.json({ table: data }, { status: 201 }); } catch (error) { return NextResponse.json({ error: error.message }, { status: 400 }); } }
