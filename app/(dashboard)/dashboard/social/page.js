@@ -313,10 +313,10 @@ export default function SocialPage() {
               <p className="font-bold text-zinc-800 dark:text-zinc-200">💡 Bağlantıları Yapılandırmak İçin:</p>
               <p>Projeyi çalıştırdığınız sunucunun env (çevre değişkenleri) ayarlarından veya <code>.env.local</code> dosyasından aşağıdaki anahtarları girin:</p>
               <ul className="list-disc pl-5 space-y-1 font-mono text-[10px] text-zinc-600 dark:text-zinc-400">
-                <li>X_CLIENT_ID = "X Geliştirici Portalı -> OAuth 2.0 Client ID"</li>
-                <li>META_APP_ID = "Meta (Facebook) Developer Console -> App ID"</li>
-                <li>META_APP_SECRET = "Meta Developer Console -> App Secret"</li>
-                <li>GROQ_API_KEY = "Groq Console -> API Key"</li>
+                <li>X_CLIENT_ID = "X Geliştirici Portalı -&gt; OAuth 2.0 Client ID"</li>
+                <li>META_APP_ID = "Meta (Facebook) Developer Console -&gt; App ID"</li>
+                <li>META_APP_SECRET = "Meta Developer Console -&gt; App Secret"</li>
+                <li>GROQ_API_KEY = "Groq Console -&gt; API Key"</li>
                 <li>APP_URL = "Uygulamanın yayındaki URL'i (OAuth callback adresi için)"</li>
               </ul>
               <p className="pt-2 text-[10px] text-zinc-500">Mevcut callback (geri dönüş) adresiniz: <code>{configStatus.app_url}/api/oauth/[sağlayıcı]/callback</code></p>
