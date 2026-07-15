@@ -115,25 +115,30 @@ export async function POST(_request, { params }) {
         : '';
 
     const prompt = `Bir iOS uygulaması için pazar analizi yap.
-
-Uygulama: ${analysis.app_name}
+    
+Uygulama Adı: ${analysis.app_name}
 Açıklama: ${analysis.app_description || 'Belirtilmemiş'}
-Kategori: ${analysis.category || 'Belirtilmemiş'}${screenshotText}
+Kategori/Sektör: ${analysis.category || 'Belirtilmemiş'}${screenshotText}
 
-App Store'daki rakipler (iTunes API verisi):
+App Store Rakipleri (iTunes Search API'den gelen ham arama sonuçları):
 ${JSON.stringify(competitors, null, 2)}
+
+[ÖNEMLİ TALİMATLAR]:
+1. Arama sorgusuna bağlı olarak iTunes'tan az rakip dönmüş veya alakasız sonuçlar gelmiş olabilir. Sen bir AI olarak bu sektörün gerçek dünyadaki (örneğin habit tracker, pomodoro vb. aşırı doymuş pazarlar) genel rekabet seviyesini ve doymuşluğunu KENDİ BİLGİNLE de rasyonel olarak değerlendir. 
+2. Eğer bu doymuş veya kopyalanması aşırı kolay bir sektörse, bunu dürüstçe belirt. Fırsat skorunu (opportunity_score) ve rekabet düzeyini (competition_level) gerçekçi olarak yansıt. "Boş pazar" yanılgısına düşme.
+3. Rakipler listesinde sadece iTunes'tan gelenleri değil, genel kültüründe bildiğin dünyaca ünlü 2-3 büyük rakibi de (örneğin Habitica, Streaks vb.) "market_analysis" içinde ismen geçir.
 
 Analiz et ve şu JSON formatında cevap ver:
 {
-  "market_analysis": "...",
+  "market_analysis": "Pazarın gerçek durumunu, doymuşluğunu ve rekabeti özetleyen rasyonel paragraf...",
   "competition_level": "low|medium|high",
   "opportunity_score": 0-100,
   "revenue_estimate": "~$X-Y/ay",
-  "verdict": "Kısa karar: yapılabilir mi?",
+  "verdict": "Dürüst ve gerçekçi kısa karar: yapılabilir mi, girmeye değer mi?",
   "verdict_color": "green|yellow|red",
   "strengths": ["..."],
   "risks": ["..."],
-  "recommendation": "..."
+  "recommendation": "Girişimciye dürüst stratejik tavsiye..."
 }
 
 SADECE JSON döndür, başka metin ekleme.`;
