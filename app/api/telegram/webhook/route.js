@@ -6,6 +6,8 @@ import { transcribeVoice } from "@/lib/telegram/transcribe";
 import { processMessage } from "@/lib/telegram/processor";
 import { getTelegramConfig } from "@/lib/telegram/config";
 import { logAiUsage } from "@/lib/telegram/db";
+import { createAdminClient } from "@/lib/supabase/admin";
+import crypto from "node:crypto";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,6 +27,22 @@ export async function POST(request) {
     update = await request.json();
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
+  }
+
+  const callback = update.callback_query;
+  if (callback?.data?.startsWith("approval:")) {
+    const [, action, token] = callback.data.split(":");
+    const access = checkAccess(callback.from?.id);
+    if (!access.allowed || !["approved", "rejected", "skipped"].includes(action) || !token) return NextResponse.json({ ok: true });
+    const db = createAdminClient(); const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const { data: approval } = await db.from("approval_requests").select("*").eq("token_hash", tokenHash).eq("status", "pending").gt("expires_at", new Date().toISOString()).maybeSingle();
+    if (!approval) { await sendMessage(callback.message?.chat?.id, "Bu onay isteği artık geçerli değil."); return NextResponse.json({ ok: true }); }
+    await db.from("approval_requests").update({ status: action, resolved_at: new Date().toISOString() }).eq("id", approval.id).eq("status", "pending");
+    await db.from("content_items").update({ status: action === "approved" ? "approved" : action }).eq("id", approval.content_item_id);
+    if (approval.execution_id) await db.from("workflow_executions").update({ status: action === "approved" ? "queued" : "cancelled" }).eq("id", approval.execution_id);
+    await db.from("audit_logs").insert({ workspace_id: approval.workspace_id, action: `telegram.approval_${action}`, entity_type: "approval_request", entity_id: approval.id, metadata: { telegram_user_id: callback.from?.id } });
+    await sendMessage(callback.message?.chat?.id, action === "approved" ? "İçerik onaylandı ve yayın kuyruğuna alındı." : "İçerik onayı güncellendi.");
+    return NextResponse.json({ ok: true });
   }
 
   const message = update.message;
