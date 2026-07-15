@@ -3,9 +3,9 @@
 begin;
 
 -- supabase\migrations\202607140001_native_automation_core.sql
-Exit code: 0
-Wall time: 4.3 seconds
-Output:
+-- Exit code: 0
+-- Wall time: 4.3 seconds
+-- Output:
 -- Native Automation OS: multi-tenant core. Apply with Supabase CLI before enabling /dashboard/automations.
 create extension if not exists pgcrypto;
 
@@ -150,9 +150,9 @@ do $$ declare t text; begin foreach t in array array['workflows','workflow_versi
 
 
 -- supabase\migrations\202607150001_automation_security_and_queue_hardening.sql
-Exit code: 0
-Wall time: 7.7 seconds
-Output:
+-- Exit code: 0
+-- Wall time: 7.7 seconds
+-- Output:
 -- Automation OS hardening: explicit grants, role-aware RLS and worker recovery.
 -- This migration is additive and can be applied after 202607140001_native_automation_core.sql.
 
@@ -266,9 +266,9 @@ grant execute on function public.recover_stalled_automation_jobs(interval) to se
 
 
 -- supabase\migrations\202607150002_social_oauth_and_publishing.sql
-Exit code: 0
-Wall time: 7.7 seconds
-Output:
+-- Exit code: 0
+-- Wall time: 7.7 seconds
+-- Output:
 -- Social publishing credentials never cross the browser boundary.
 create table if not exists public.oauth_states (
   id uuid primary key default gen_random_uuid(),
@@ -328,9 +328,9 @@ grant select, insert, update, delete on table public.oauth_states, public.oauth_
 
 
 -- supabase\migrations\202607150003_telegram_approval_delivery.sql
-Exit code: 0
-Wall time: 7.7 seconds
-Output:
+-- Exit code: 0
+-- Wall time: 7.7 seconds
+-- Output:
 alter table public.approval_requests add column if not exists telegram_chat_id bigint;
 alter table public.approval_requests add column if not exists telegram_message_id bigint;
 create index if not exists idx_approval_pending_expiry on public.approval_requests(workspace_id, status, expires_at) where status = 'pending';
