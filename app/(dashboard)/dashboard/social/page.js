@@ -3,20 +3,20 @@
 import { useEffect, useState } from "react";
 
 function AccountCard({ provider, account, configured }) {
-  const label = provider === "x" ? "X" : "Instagram";
+  const label = provider === "x" ? "X (Twitter)" : "Instagram";
   if (account) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-800 bg-[#121214] p-4 shadow-md transition hover:border-zinc-700">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{label}</p>
-            <p className="mt-1 text-xs text-zinc-500">{account.display_name || account.external_account_id}</p>
+            <p className="text-xs font-bold text-zinc-300">{label}</p>
+            <p className="mt-1 font-mono text-[10px] text-zinc-500">{account.display_name || account.external_account_id}</p>
           </div>
           <span
-            className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+            className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
               account.status === "connected"
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30"
+                : "bg-amber-950/40 text-amber-400 border border-amber-900/30"
             }`}
           >
             {account.status === "connected" ? "Bağlı" : "Yeniden bağlanmalı"}
@@ -24,28 +24,28 @@ function AccountCard({ provider, account, configured }) {
         </div>
         <a
           href={`/api/oauth/${provider}/start`}
-          className="mt-3 inline-flex text-xs font-semibold text-zinc-650 hover:text-zinc-900 underline underline-offset-4 dark:text-zinc-350 dark:hover:text-zinc-100"
+          className="mt-3.5 inline-flex text-[10px] font-semibold text-zinc-400 hover:text-zinc-250 underline underline-offset-4"
         >
-          Yeniden bağla
+          Bağlantıyı Yenile
         </a>
       </div>
     );
   }
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{label}</p>
-      <p className="mt-1 min-h-10 text-xs leading-relaxed text-zinc-500">
-        {configured ? "Henüz hesap bağlı değil." : "Server OAuth yapılandırması eksik."}
+    <div className="rounded-xl border border-zinc-800 bg-[#121214] p-4 shadow-md transition hover:border-zinc-700">
+      <p className="text-xs font-bold text-zinc-300">{label}</p>
+      <p className="mt-1 min-h-[36px] text-[10px] leading-relaxed text-zinc-500">
+        {configured ? "Henüz hesap bağlanmadı." : "Sunucu OAuth yapılandırması eksik."}
       </p>
       {configured ? (
         <a
           href={`/api/oauth/${provider}/start`}
-          className="mt-3 inline-flex rounded-lg bg-zinc-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="mt-3 inline-flex rounded-lg bg-zinc-100 px-3.5 py-1.5 text-[10px] font-bold text-zinc-900 hover:bg-zinc-250"
         >
-          {label} hesabını bağla
+          {label} Bağlantısını Kur
         </a>
       ) : (
-        <span className="mt-3 inline-flex rounded-lg border border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-800">
+        <span className="mt-3 inline-flex rounded-lg border border-zinc-800 px-2.5 py-1 text-[9px] text-zinc-650">
           Yapılandırılmamış
         </span>
       )}
@@ -79,7 +79,7 @@ export default function SocialPage() {
   const [chatMessages, setChatMessages] = useState([
     {
       role: "assistant",
-      content: "Merhaba! Ben senin AI Sosyal Medya Ajanınım. 🤖\n\nSenin için içerik taslakları hazırlayabilir, kampanyalar planlayabilir ve görseller üretebilirim. Bana ne hakkında içerik üretmek istediğini söyle, taslakları hazırlayayım!\n\n**Örnek İstekler:**\n* *'Yeni lansmanımız için 2 tane X postu tasarla'*\n* *'Instagram için fütüristik görsele sahip bir teknoloji postu planla'*"
+      content: "Merhaba! Ben senin AI Sosyal Medya Ajanınım. 🤖\n\nSenin için yüksek kaliteli X ve Instagram paylaşımları yazabilir, ilgi çekici görsel promptları hazırlayıp içerik kuyruğuna ekleyebilirim. Ne paylaşmak istediğini bana yazman yeterli!"
     }
   ]);
 
@@ -166,7 +166,7 @@ export default function SocialPage() {
       if (!res.ok) throw new Error(data.error || "AI içerik planlayamadı.");
       setSuggestions(data.items || []);
       setAiPlanSummary(data.plan || "");
-      setNotice("AI içerik önerileri oluşturuldu!");
+      setNotice("AI içerik önerileri başarıyla oluşturuldu!");
     } catch (err) {
       setError("Planlama hatası: " + err.message);
     } finally {
@@ -174,11 +174,17 @@ export default function SocialPage() {
     }
   }
 
+  // Helper to build clean image URL
+  function buildImageUrl(promptText) {
+    if (!promptText) return "";
+    // Remove special characters that could break URL encoding
+    const clean = promptText.replace(/[^a-zA-Z0-9\s]/g, "").trim();
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(clean)}?width=1024&height=1024&nologo=true`;
+  }
+
   // Add suggestion to draft queue
   async function insertDraftIntoDatabase(platformVal, titleVal, textVal, mediaPromptVal) {
-    const mediaUrl = mediaPromptVal
-      ? `https://image.pollinations.ai/prompt/${encodeURIComponent(mediaPromptVal)}?width=1024&height=1024&nologo=true`
-      : null;
+    const mediaUrl = mediaPromptVal ? buildImageUrl(mediaPromptVal) : null;
 
     const response = await fetch("/api/social/content", {
       method: "POST",
@@ -268,76 +274,78 @@ export default function SocialPage() {
   const instagramAccount = accounts.find((account) => account.provider === "instagram");
 
   return (
-    <div className="flex h-[calc(100vh-var(--dashboard-header-height,3.75rem))] w-full overflow-hidden bg-zinc-50 dark:bg-zinc-950">
-      {/* Left Column - Main Workspace (Scrollable) */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 min-h-0">
-        <header className="flex flex-col gap-1">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Social OS</p>
+    <div className="flex h-[calc(100vh-var(--dashboard-header-height,3.75rem))] w-full overflow-hidden bg-[#09090b] text-zinc-150">
+      {/* Left Column - Main Studio (Scrollable) */}
+      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 min-h-0 bg-[#141416] bg-[radial-gradient(circle_at_1px_1px,#2d2d30_1px,transparent_0)] bg-[size:20px_20px]">
+        
+        {/* Header Section */}
+        <header className="flex flex-col gap-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Social OS</p>
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">İçerik Stüdyosu</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-100">İçerik Stüdyosu</h1>
             <button
               onClick={() => setShowSettingsGuide(!showSettingsGuide)}
-              className="rounded-xl border border-zinc-250 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-250"
+              className="rounded-xl border border-zinc-800 bg-[#121214] px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-800"
             >
-              ⚙️ Entegrasyon Ayarları
+              ⚙️ Entegrasyon Anahtarları
             </button>
           </div>
-          <p className="text-xs text-zinc-500">
-            Sosyal medya hesaplarınızı bağlayın, yapay zeka ile kampanyalar planlayın ve görsel içeriklerinizi yönetin.
+          <p className="text-xs text-zinc-400">
+            Yapay zeka ile detaylı sosyal medya kampanyaları tasarlayın, görseller üretin ve yayın sırasını planlayın.
           </p>
         </header>
 
         {/* Integration Credentials Status Guide Panel */}
         {showSettingsGuide && configStatus && (
-          <section className="rounded-2xl border border-blue-200 bg-blue-50/20 p-5 space-y-4 dark:border-blue-900 dark:bg-blue-950/10">
+          <section className="rounded-2xl border border-blue-900 bg-blue-950/10 p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-blue-900 dark:text-blue-200">🛠️ Entegrasyon Anahtarları Durumu</h3>
-              <button onClick={() => setShowSettingsGuide(false)} className="text-xs text-blue-500 hover:text-blue-700">Kapat</button>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-blue-400">🛠️ Entegrasyon Anahtarları Durumu</h3>
+              <button onClick={() => setShowSettingsGuide(false)} className="text-xs text-blue-500 hover:text-blue-300">Kapat</button>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 text-xs">
-              <div className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm dark:bg-zinc-900">
+              <div className="flex items-center justify-between rounded-xl bg-zinc-900 border border-zinc-850 p-3 shadow-inner">
                 <span>X OAuth (X_CLIENT_ID)</span>
-                <span className={`h-2.5 w-2.5 rounded-full ${configStatus.x_configured ? "bg-emerald-500" : "bg-rose-500"}`} />
+                <span className={`h-2 w-2 rounded-full ${configStatus.x_configured ? "bg-emerald-500" : "bg-rose-500"}`} />
               </div>
-              <div className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm dark:bg-zinc-900">
+              <div className="flex items-center justify-between rounded-xl bg-zinc-900 border border-zinc-850 p-3 shadow-inner">
                 <span>Meta API (META_APP_ID)</span>
-                <span className={`h-2.5 w-2.5 rounded-full ${configStatus.meta_configured ? "bg-emerald-500" : "bg-rose-500"}`} />
+                <span className={`h-2 w-2 rounded-full ${configStatus.meta_configured ? "bg-emerald-500" : "bg-rose-500"}`} />
               </div>
-              <div className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm dark:bg-zinc-900">
+              <div className="flex items-center justify-between rounded-xl bg-zinc-900 border border-zinc-850 p-3 shadow-inner">
                 <span>Groq AI Key</span>
-                <span className={`h-2.5 w-2.5 rounded-full ${configStatus.groq_configured ? "bg-emerald-500" : "bg-rose-500"}`} />
+                <span className={`h-2 w-2 rounded-full ${configStatus.groq_configured ? "bg-emerald-500" : "bg-rose-500"}`} />
               </div>
             </div>
 
-            <div className="rounded-xl bg-white p-4 text-xs leading-relaxed space-y-2 dark:bg-zinc-900">
-              <p className="font-bold text-zinc-800 dark:text-zinc-200">💡 Bağlantıları Yapılandırmak İçin:</p>
+            <div className="rounded-xl bg-zinc-900/60 border border-zinc-850 p-4 text-xs leading-relaxed space-y-2 text-zinc-400">
+              <p className="font-bold text-zinc-300">💡 Bağlantıları Yapılandırmak İçin:</p>
               <p>Projeyi çalıştırdığınız sunucunun env (çevre değişkenleri) ayarlarından veya <code>.env.local</code> dosyasından aşağıdaki anahtarları girin:</p>
-              <ul className="list-disc pl-5 space-y-1 font-mono text-[10px] text-zinc-600 dark:text-zinc-400">
+              <ul className="list-disc pl-5 space-y-1 font-mono text-[10px] text-zinc-550">
                 <li>X_CLIENT_ID = "X Geliştirici Portalı -&gt; OAuth 2.0 Client ID"</li>
-                <li>META_APP_ID = "Meta (Facebook) Developer Console -&gt; App ID"</li>
+                <li>META_APP_ID = "Meta Developer Console -&gt; App ID"</li>
                 <li>META_APP_SECRET = "Meta Developer Console -&gt; App Secret"</li>
                 <li>GROQ_API_KEY = "Groq Console -&gt; API Key"</li>
-                <li>APP_URL = "Uygulamanın yayındaki URL'i (OAuth callback adresi için)"</li>
+                <li>APP_URL = "Uygulamanın yayındaki URL'i"</li>
               </ul>
-              <p className="pt-2 text-[10px] text-zinc-500">Mevcut callback (geri dönüş) adresiniz: <code>{configStatus.app_url}/api/oauth/[sağlayıcı]/callback</code></p>
+              <p className="pt-2 text-[10px] text-zinc-500">Mevcut callback adresiniz: <code>{configStatus.app_url}/api/oauth/[sağlayıcı]/callback</code></p>
             </div>
           </section>
         )}
 
-        {/* AI Campaign Co-Pilot */}
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-xs font-bold text-zinc-850 dark:text-zinc-200 flex items-center gap-2">
-            <span>🚀</span> AI Kampanya Planlayıcı & Görsel Üretici
+        {/* AI Campaign Co-Pilot Panel */}
+        <section className="rounded-2xl border border-zinc-800 bg-[#121214] p-5 shadow-lg">
+          <h2 className="text-xs font-bold text-zinc-200 flex items-center gap-2">
+            <span>🚀</span> AI Kampanya Planlayıcı & Görsel Stüdyosu
           </h2>
-          <p className="text-[10px] text-zinc-450 mt-1 leading-relaxed">
-            Kampanya hedefinizi doğal dille belirtin (örneğin: "Yeni SaaS lansmanı için X ve Instagram postları hazırla, görseller fütüristik olsun").
+          <p className="text-[10px] text-zinc-500 mt-1 leading-relaxed">
+            Kampanya hedefinizi doğal dille detaylıca belirtin (örneğin: "Yapay zeka asistanımız için X platformunda 2 adet detaylı teknik tweet yaz, görseller fütüristik olsun").
           </p>
           <div className="mt-4 flex gap-3">
             <input
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              placeholder="Kampanya hedefiniz veya içerik fikriniz..."
-              className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              placeholder="Kampanya detayları veya içerik konunuz..."
+              className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700"
               onKeyDown={(e) => {
                 if (e.key === "Enter") planWithAI();
               }}
@@ -345,45 +353,45 @@ export default function SocialPage() {
             <button
               onClick={planWithAI}
               disabled={aiLoading || !aiPrompt}
-              className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="rounded-xl bg-zinc-100 px-5 py-2.5 text-xs font-bold text-zinc-900 hover:bg-zinc-200 disabled:opacity-50"
             >
               {aiLoading ? "Planlanıyor..." : "Planla ⚡"}
             </button>
           </div>
 
-          {/* AI Suggested Items */}
+          {/* AI Suggested Items Grid */}
           {suggestions.length > 0 && (
-            <div className="mt-5 space-y-4 border-t border-zinc-150 pt-4 dark:border-zinc-800">
+            <div className="mt-5 space-y-4 border-t border-zinc-800 pt-4">
               <div>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">AI Planlama Özeti</p>
-                <p className="mt-1 text-xs font-medium text-zinc-855 dark:text-zinc-250">{aiPlanSummary}</p>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">AI Planlama Özeti</p>
+                <p className="mt-1 text-xs font-medium text-zinc-300">{aiPlanSummary}</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {suggestions.map((sug, idx) => (
                   <div
                     key={idx}
-                    className="rounded-xl border border-zinc-150 bg-zinc-50/30 p-3.5 dark:border-zinc-800 dark:bg-zinc-950/40 flex flex-col justify-between"
+                    className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider">
-                        <span className={sug.platform === "x" ? "text-sky-600" : "text-pink-600"}>{sug.platform}</span>
-                        <span className="text-zinc-450">İçerik Önerisi</span>
+                        <span className={sug.platform === "x" ? "text-sky-400" : "text-pink-400"}>{sug.platform.toUpperCase()}</span>
+                        <span className="text-zinc-500">Plan Taslağı</span>
                       </div>
-                      <h4 className="mt-2 text-xs font-bold text-zinc-850 dark:text-zinc-100">{sug.title}</h4>
-                      <p className="mt-1.5 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">{sug.body.text}</p>
+                      <h4 className="mt-2 text-xs font-bold text-zinc-250">{sug.title}</h4>
+                      <p className="mt-2 text-[11px] leading-relaxed text-zinc-400 whitespace-pre-wrap">{sug.body.text}</p>
 
                       {sug.mediaPrompt && (
-                        <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+                        <div className="mt-3.5 overflow-hidden rounded-xl border border-zinc-800 bg-[#0e0e11]">
                           <img
-                            src={`https://image.pollinations.ai/prompt/${encodeURIComponent(
-                              sug.mediaPrompt
-                            )}?width=512&height=512&nologo=true`}
+                            src={buildImageUrl(sug.mediaPrompt)}
                             alt="AI Görsel Önizleme"
-                            className="w-full object-cover h-32"
-                            loading="lazy"
+                            className="w-full object-cover h-36"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
                           />
-                          <div className="p-2 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800">
-                            <p className="text-[9px] font-mono leading-relaxed text-zinc-450 italic">
+                          <div className="p-2.5 bg-zinc-950/60 border-t border-zinc-850">
+                            <p className="text-[9px] font-mono leading-relaxed text-zinc-500 italic">
                               Visual: {sug.mediaPrompt}
                             </p>
                           </div>
@@ -391,18 +399,18 @@ export default function SocialPage() {
                       )}
                     </div>
 
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-4 flex gap-2">
                       <button
                         onClick={() => addSuggestedDraft(sug)}
-                        className="w-full rounded-lg bg-zinc-900 py-1.5 text-[11px] font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        className="w-full rounded-lg bg-zinc-100 py-2 text-[10px] font-bold text-zinc-900 hover:bg-zinc-250"
                       >
-                        Kuyruğa Ekle ✅
+                        Sıraya Ekle ✅
                       </button>
                       <button
                         onClick={() => setSuggestions((current) => current.filter((item) => item !== sug))}
-                        className="rounded-lg border border-zinc-250 px-2.5 py-1.5 text-[11px] text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-850"
+                        className="rounded-lg border border-zinc-800 px-3 py-2 text-[10px] text-zinc-500 hover:bg-zinc-800"
                       >
-                        Reddet
+                        Yoksay
                       </button>
                     </div>
                   </div>
@@ -412,13 +420,13 @@ export default function SocialPage() {
           )}
         </section>
 
-        {/* Account Settings */}
-        <section className="space-y-2.5">
+        {/* Account Status Grid */}
+        <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-zinc-700 dark:text-zinc-200">Entegre Sosyal Medya Hesapları</h2>
-            <span className="text-[10px] text-zinc-450">OAuth ve Maskelenmiş Güvenlik</span>
+            <h2 className="text-xs font-bold text-zinc-400">Aktif Yayın Kanalları</h2>
+            <span className="text-[10px] text-zinc-650">OAuth Yetkilendirmeleri</span>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <AccountCard provider="x" account={xAccount} configured={providers.x?.configured} />
             <AccountCard provider="instagram" account={instagramAccount} configured={providers.instagram?.configured} />
           </div>
@@ -426,15 +434,15 @@ export default function SocialPage() {
 
         {/* Simple Draft Form */}
         <section className="space-y-3">
-          <h2 className="text-xs font-bold text-zinc-700 dark:text-zinc-200">Manuel Taslak Girişi</h2>
+          <h2 className="text-xs font-bold text-zinc-400">Manuel Post Girişi</h2>
           <form
             onSubmit={create}
-            className="flex flex-wrap gap-2.5 rounded-2xl border border-zinc-250 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+            className="flex flex-wrap gap-3 rounded-2xl border border-zinc-800 bg-[#121214] p-3 shadow-md"
           >
             <select
               value={platform}
               onChange={(event) => setPlatform(event.target.value)}
-              className="rounded-xl border border-zinc-200 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+              className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs font-semibold text-zinc-300"
             >
               <option value="x">X (Twitter)</option>
               <option value="instagram">Instagram</option>
@@ -443,11 +451,11 @@ export default function SocialPage() {
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               required
-              placeholder="Taslak metnini buraya yazın..."
-              className="min-w-48 flex-1 rounded-xl border border-zinc-200 px-3 py-2 text-xs text-zinc-900 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              placeholder="İçerik fikrini yazın..."
+              className="min-w-48 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none"
             />
-            <button className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
-              Taslağı Kaydet
+            <button className="rounded-xl bg-zinc-100 px-4 py-2 text-xs font-bold text-zinc-900 hover:bg-zinc-250">
+              Taslak Oluştur
             </button>
           </form>
         </section>
@@ -456,64 +464,64 @@ export default function SocialPage() {
         {error && (
           <p
             role="alert"
-            className="rounded-xl bg-rose-50 px-4 py-2 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+            className="rounded-xl bg-rose-950/20 border border-rose-900/30 px-4 py-2.5 text-xs text-rose-300"
           >
             ⚠️ {error}
           </p>
         )}
         {notice && (
-          <p className="rounded-xl bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <p className="rounded-xl bg-emerald-950/20 border border-emerald-900/30 px-4 py-2.5 text-xs text-emerald-300">
             ✨ {notice}
           </p>
         )}
 
-        {/* Main Draft Queue */}
+        {/* Main Content Draft Queue */}
         <section className="space-y-3">
-          <h2 className="text-xs font-bold text-zinc-700 dark:text-zinc-200">Aktif İçerik Sırası & Taslaklar</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <h2 className="text-xs font-bold text-zinc-400">Yayınlanacak İçerik Sırası ({items.length})</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
             {items.map((item) => (
               <article
                 key={item.id}
-                className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between"
+                className="rounded-2xl border border-zinc-850 bg-[#121214]/60 p-4 shadow-md flex flex-col justify-between transition hover:border-zinc-800"
               >
                 <div>
-                  <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-zinc-400">
-                    <span className={item.platform === "x" ? "text-sky-600" : "text-pink-600"}>{item.platform}</span>
+                  <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider">
+                    <span className={item.platform === "x" ? "text-sky-400" : "text-pink-400"}>{item.platform.toUpperCase()}</span>
                     <span
                       className={`rounded-full px-2 py-0.5 text-[8px] font-bold ${
                         item.status === "published"
-                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30"
-                          : "bg-zinc-100 text-zinc-650 dark:bg-zinc-800 dark:text-zinc-350"
+                          ? "bg-emerald-950/40 text-emerald-400"
+                          : "bg-zinc-900 text-zinc-500"
                       }`}
                     >
-                      {item.status === "published" ? "Yayınlandı" : "Taslak"}
+                      {item.status === "published" ? "Paylaşıldı" : "Taslak"}
                     </span>
                   </div>
-                  <p className="mt-2.5 text-xs font-semibold text-zinc-900 dark:text-zinc-50">{item.title}</p>
+                  <p className="mt-3 text-xs font-bold text-zinc-200">{item.title}</p>
                   {item.body?.text && item.body.text !== item.title && (
-                    <p className="mt-1.5 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">{item.body.text}</p>
+                    <p className="mt-2 text-[11px] leading-relaxed text-zinc-400 whitespace-pre-wrap">{item.body.text}</p>
                   )}
 
                   {item.body?.mediaUrl && (
-                    <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
-                      <img src={item.body.mediaUrl} alt="İçerik Görseli" className="w-full object-cover h-32" />
+                    <div className="mt-3 overflow-hidden rounded-xl border border-zinc-800 bg-[#0e0e11]">
+                      <img src={item.body.mediaUrl} alt="Görsel" className="w-full object-cover h-36" />
                     </div>
                   )}
                 </div>
 
                 {item.status !== "published" && (
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-5 flex gap-2">
                     <button
                       disabled={publishing === item.id}
                       onClick={() => requestApproval(item.id)}
-                      className="flex-1 rounded-lg border border-zinc-250 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-850"
+                      className="flex-1 rounded-lg border border-zinc-800 py-2 text-[10px] font-bold text-zinc-400 hover:bg-zinc-800 disabled:opacity-50"
                     >
                       Onaya Gönder
                     </button>
                     <button
                       disabled={publishing === item.id}
                       onClick={() => publish(item.id)}
-                      className="flex-1 rounded-lg bg-zinc-900 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                      className="flex-1 rounded-lg bg-zinc-100 py-2 text-[10px] font-bold text-zinc-900 hover:bg-zinc-250 disabled:opacity-50"
                     >
                       {publishing === item.id ? "..." : "Yayınla"}
                     </button>
@@ -521,7 +529,7 @@ export default function SocialPage() {
                 )}
 
                 {item.external_id && (
-                  <p className="mt-2.5 font-mono text-[9px] text-zinc-450 dark:text-zinc-505">Post ID: {item.external_id}</p>
+                  <p className="mt-3 font-mono text-[9px] text-zinc-650">Post ID: {item.external_id}</p>
                 )}
               </article>
             ))}
@@ -529,10 +537,10 @@ export default function SocialPage() {
         </section>
       </div>
 
-      {/* Right Column - AI Agent Copilot Chat */}
-      <aside className="w-[340px] border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between min-h-0">
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-850">
-          <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+      {/* Right Column - AI Social Agent Copilot (Cohesive Theme) */}
+      <aside className="w-[340px] border-l border-zinc-800 bg-[#121214] flex flex-col justify-between min-h-0">
+        <div className="p-4 border-b border-zinc-800">
+          <h3 className="text-xs font-bold text-zinc-200 flex items-center gap-2">
             <span>🤖</span> AI Sosyal Medya Ajanı
           </h3>
         </div>
@@ -543,8 +551,8 @@ export default function SocialPage() {
               key={idx}
               className={`rounded-xl p-3 text-xs leading-relaxed max-w-[85%] ${
                 msg.role === "user"
-                  ? "bg-zinc-100 text-zinc-800 self-end ml-auto dark:bg-zinc-800 dark:text-zinc-200"
-                  : "bg-blue-50 text-blue-900 dark:bg-blue-950/20 dark:text-blue-200"
+                  ? "bg-zinc-800 text-zinc-250 self-end ml-auto"
+                  : "bg-blue-950/20 text-blue-300 border border-blue-900/30"
               }`}
             >
               <p className="font-semibold text-[8px] uppercase tracking-wider opacity-60 mb-1">
@@ -554,18 +562,18 @@ export default function SocialPage() {
             </div>
           ))}
           {chatLoading && (
-            <div className="rounded-xl p-3 text-xs bg-blue-50/50 text-blue-800 dark:bg-blue-950/10 dark:text-blue-300 w-[60%] animate-pulse">
+            <div className="rounded-xl p-3 text-xs bg-blue-950/10 text-blue-400 w-[60%] animate-pulse">
               Ajan planlıyor...
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-855 flex gap-2">
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-850 flex gap-2">
           <input
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             placeholder="Ajan ile konuşun..."
-            className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-250 placeholder:text-zinc-650 focus:outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter") sendChatMessage();
             }}
@@ -573,7 +581,7 @@ export default function SocialPage() {
           <button
             onClick={sendChatMessage}
             disabled={chatLoading || !chatInput.trim()}
-            className="rounded-xl bg-zinc-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="rounded-xl bg-zinc-100 px-3.5 py-2 text-xs font-semibold text-zinc-900 hover:bg-zinc-200 disabled:opacity-50"
           >
             Gönder
           </button>

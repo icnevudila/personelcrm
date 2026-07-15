@@ -38,7 +38,7 @@ export async function POST(request) {
        - Node Sil: { "action": { "type": "DELETE_NODE", "nodeId": "..." } }
     
     2. Social OS Ekranı İçin:
-       - Taslak Ekle: { "action": { "type": "CREATE_SOCIAL_DRAFT", "platform": "x" | "instagram", "title": "Taslak Başlığı", "body": { "text": "Paylaşılacak metin..." }, "mediaPrompt": "Optional visual prompt..." } }
+       - Taslak Ekle: { "action": { "type": "CREATE_SOCIAL_DRAFT", "platform": "x" | "instagram", "title": "Taslak Başlığı", "body": { "text": "Asla baştan savma olmayan, detaylı, profesyonelce hazırlanmış Türkçe paylaşım metni..." }, "mediaPrompt": "Detailed English image prompt (e.g. 'A close up of a neon glowing smartphone, highly detailed, 3d render') - NEVER use Turkish here." } }
 
     [YANIT FORMATI]:
     Yanıtın iki kısımdan oluşmalıdır:
@@ -46,14 +46,15 @@ export async function POST(request) {
     2. Eğer bir aksiyon tetiklenecekse, mesajın bittiği yerde en altta \`\`\`json şeklinde aksiyon nesnesi.
     
     Örnek:
-    Merhaba! İstediğin gibi X platformu için bir taslak hazırlıyorum.
+    Merhaba! İstediğin gibi X platformu için detaylı bir taslak hazırlıyorum.
     \`\`\`json
     {
       "action": {
         "type": "CREATE_SOCIAL_DRAFT",
         "platform": "x",
         "title": "Yeni SaaS Lansmanı",
-        "body": { "text": "Yeni projemiz yayında! 🚀" }
+        "body": { "text": "Yeni projemiz nihayet yayında! 🚀 Bizi desteklemek ve detayları incelemek için hemen web sitemizi ziyaret edin. Geri bildirimlerinizi heyecanla bekliyoruz!" },
+        "mediaPrompt": "A sleek dark modern workspace flatlay with code on screens, neon blue accents, high resolution photo"
       }
     }
     \`\`\`

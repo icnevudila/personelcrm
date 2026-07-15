@@ -73,29 +73,28 @@ export async function POST(request) {
 
       return NextResponse.json(parsed);
     } else if (type === "social") {
-      const systemPrompt = `Sen bir Sosyal Medya İçerik Planlama Uzmanısın (Social OS Co-pilot). Kullanıcının hedefine uygun olarak X (Twitter) veya Instagram için taslak içerik planları ve medya önerileri oluşturacaksın.
+      const systemPrompt = `Sen profesyonel bir Sosyal Medya Kampanya Yöneticisi ve Kıdemli Metin yazarısın. Kullanıcının hedefine uygun olarak X (Twitter) veya Instagram için detaylı, dikkat çekici ve profesyonel taslak içerik planları oluşturacaksın.
 
-      Her önerilen içerik için:
-      - 'platform': "x" veya "instagram"
-      - 'title': Kısa açıklayıcı başlık
-      - 'body': { "text": "Paylaşılacak metin..." }
-      - 'mediaPrompt': Eğer bir görsel/video üretilmek isteniyorsa, bunu üretmek için kullanılacak detaylı İngilizce görsel üretim promptu.
+      [ÖNEMLİ KURALLAR]:
+      1. 'body.text' (Gönderi İçeriği): Asla baştan savma olmamalı. Samimi, ilgi çekici, uygun emojiler barındıran ve profesyonelce yazılmış detaylı Türkçe sosyal medya metinleri oluştur.
+      2. 'mediaPrompt' (Görsel Promptu): KESİNLİKLE İngilizce olmalıdır. Türkçe karakter veya kelime içermemelidir. Pollinations AI için son derece sanatsal ve detaylı tarifler yaz (Örn: "A futuristic neon cyber room with a programmer coding, 3d render, cinematic lighting, highly detailed").
+      3. 'platform': "x" veya "instagram".
 
       [JSON FORMATI]:
-      Yanıtın SADECE şu formatta bir JSON olmalıdır:
+      Sadece saf JSON formatında yanıt ver:
       {
-        "plan": "Planlama özeti...",
+        "plan": "Detaylı kampanya stratejisi ve planlama özeti...",
         "items": [
           {
             "platform": "x" | "instagram",
-            "title": "İçerik Başlığı",
-            "body": { "text": "Tweet veya post metni..." },
-            "mediaPrompt": "Detailed English image prompt to generate visual using AI (e.g. A developer coding in a neon-lit cyber room, 3D render...)"
+            "title": "İçerik Başlığı (Kısa ve açıklayıcı)",
+            "body": { "text": "Detaylı Türkçe paylaşım metni..." },
+            "mediaPrompt": "Detailed English image prompt for AI generation..."
           }
         ]
       }
 
-      JSON dışında hiçbir şey döndürme. Kod blokları (\`\`\`json) ekleme. Sadece saf JSON döndür.`;
+      Yanıtında JSON dışında hiçbir metin veya açıklama bulunmamalıdır.`;
 
       const response = await ai.chat.completions.create({
         model,
