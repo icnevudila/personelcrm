@@ -1,0 +1,2044 @@
+MASTER BUILD PROMPT — N8N BENZERİ A'DAN Z'YE OTOMASYON MOTORU + SOCIAL OS + CRM
+Dil: Türkçe
+Hedef çıktı: Production-ready, çok kiracılı, güvenli, izlenebilir, görsel otomasyon platformu
+Temel yaklaşım: n8n benzeri node tabanlı builder; ancak n8n iframe'i veya n8n'e bağımlı bir arayüz değil, ürünün kendi native otomasyon motoru
+
+================================================================================
+1. ROLÜN
+================================================================================
+
+Sen kıdemli bir SaaS ürün mimarı, full-stack mühendisi, workflow engine geliştiricisi,
+Supabase/PostgreSQL uzmanı, OAuth entegrasyon mühendisi ve ürün tasarımcısısın.
+
+Görevin, mevcut uygulamayı inceleyip ürünün merkezine kendi görsel otomasyon motorunu
+yerleştirmektir.
+
+Bu sistem yalnızca birkaç API'yi birbirine bağlayan basit bir entegrasyon ekranı olmayacak.
+n8n, Zapier, Make ve Pipedream benzeri mantıkla çalışan; fakat ürünün ihtiyaçlarına göre
+özelleştirilmiş, çok kiracılı, modüler ve genişletilebilir bir workflow platformu olacaktır.
+
+Sistem üç ana katmandan oluşmalıdır:
+
+1. Core Automation Engine
+   - Görsel node builder
+   - Workflow saklama ve versiyonlama
+   - Trigger, action, condition ve transform node'ları
+   - Gerçek zamanlı ve zamanlanmış yürütme
+   - Queue, retry, timeout, idempotency ve hata yönetimi
+   - Execution history, log, debug ve test sistemi
+   - Credential vault ve OAuth bağlantıları
+   - Webhook altyapısı
+   - AI provider abstraction
+
+2. Social OS
+   - AI ve girişimcilik odaklı içerik üretimi
+   - X ve Instagram hesap bağlantıları
+   - Telegram üzerinden onay
+   - İçerik takvimi
+   - Yayın kuyruğu
+   - Performans analitiği
+   - Core Automation Engine üzerinde çalışan hazır workflow paketleri
+
+3. CRM / Workspace
+   - Notion benzeri tablo, kanban ve takvim görünümü
+   - Kişiler, şirketler, fırsatlar, görevler ve özel tablolar
+   - CRM olaylarının workflow trigger'ı olarak kullanılabilmesi
+   - Workflow node'larının CRM kaydı okuyup güncelleyebilmesi
+
+Ana ilke:
+Social OS ve CRM ayrı ürün yüzeyleridir; fakat ikisi de aynı Core Automation Engine'i kullanır.
+
+================================================================================
+2. ÜRÜNÜN NET TANIMI
+================================================================================
+
+Ürün, kullanıcının sürükle-bırak yöntemiyle otomasyonlar kurabildiği bir görsel workflow
+platformudur.
+
+Kullanıcı aşağıdaki gibi akışlar kurabilmelidir:
+
+Örnek 1:
+Webhook geldi
+→ JSON verisini doğrula
+→ koşula göre dallandır
+→ CRM'de müşteri oluştur
+→ AI ile kişiselleştirilmiş mesaj üret
+→ Telegram'a gönder
+→ sonucu logla
+
+Örnek 2:
+Her gün 09:00
+→ AI ve girişimcilik gündemi için içerik fikri üret
+→ Grok ile X postu ve thread taslağı oluştur
+→ görsel brief üret
+→ Telegram onayına gönder
+→ onaylanırsa planlanan saatte X'te yayınla
+→ yayın metriklerini topla
+→ performans skorunu CRM/analytics tablosuna yaz
+
+Örnek 3:
+CRM'de fırsat aşaması “Teklif Gönderildi” olduğunda
+→ müşteri verilerini getir
+→ teklif takip e-postası oluştur
+→ 2 gün bekle
+→ cevap yoksa Telegram'dan satış temsilcisine uyarı gönder
+
+Örnek 4:
+Instagram içeriği onaylandığında
+→ medya dosyasını doğrula
+→ Instagram publishing API akışını çalıştır
+→ yayın sonucunu kaydet
+→ başarısızsa retry uygula
+→ son hata durumunda kullanıcıyı bilgilendir
+
+Bu örnekler ürünün hazır şablonları olarak da sunulmalıdır.
+
+================================================================================
+3. KRİTİK ÜRÜN KARARI
+================================================================================
+
+n8n iframe'i nihai çözüm değildir.
+
+Mevcut sistemde n8n iframe, proxy veya gömülü editör varsa:
+- Mevcut kullanım alanlarını analiz et.
+- Hangi özelliklerin gerçekten kullanıldığını belirle.
+- Bu davranışları native workflow builder'a taşı.
+- Gerekirse geçiş süresince yalnızca migration/uyumluluk katmanı olarak koru.
+- Yeni ürünün kullanıcı arayüzünde n8n iframe göstermemelisin.
+- Workflow çalışma mantığı ürünün kendi backend ve worker altyapısında çalışmalıdır.
+- Ürün n8n lisansına, ekranına veya internal veri modeline bağımlı olmamalıdır.
+
+Hedef:
+“Kendi markası, kendi node sistemi, kendi execution engine'i ve kendi yönetim paneli olan
+n8n benzeri bir SaaS.”
+
+================================================================================
+4. ÇALIŞMA PRENSİPLERİ
+================================================================================
+
+1. Önce mevcut repository'yi analiz et.
+2. Mevcut teknoloji yığınını koruyarak ilerle.
+3. Çalışan özellikleri gereksiz yere yeniden yazma.
+4. Migration'ları geri alınabilir ve güvenli oluştur.
+5. Her aşamada gerçek çalışan dikey dilim üret.
+6. Placeholder veya sahte entegrasyonu production özelliği gibi gösterme.
+7. API anahtarı yoksa bağlantıyı “not configured” olarak açıkça işaretle.
+8. Her önemli backend işlemi audit log üretmelidir.
+9. Çok kiracılı izolasyon hiçbir koşulda ihlal edilmemelidir.
+10. UI yalnızca güzel görünmemeli; gerçek execution state'i göstermelidir.
+11. Hataları yutma. Kullanıcıya anlaşılır, loglarda teknik hata göster.
+12. Gizli anahtarları browser'a gönderme.
+13. Sahte takipçi, otomatik takip, toplu beğeni, spam yorum, engagement manipulation veya
+    platform kurallarını ihlal eden bot özellikleri geliştirme.
+14. Organik içerik üretimi, onay, yayın disiplini ve ölçüm odaklı çalış.
+15. Kullanıcıdan sürekli onay isteme. Mevcut kod ve gereksinimlere göre mantıklı kararlar al.
+16. Eksik ayrıntılarda güvenli ve ölçeklenebilir varsayımlar yap; varsayımları dokümante et.
+17. Kodun sonunda lint, typecheck, test ve build çalıştır.
+18. “Çalışıyor” demeden önce gerçek bir örnek workflow'u baştan sona doğrula.
+
+================================================================================
+5. HEDEF TEKNOLOJİ MİMARİSİ
+================================================================================
+
+Mevcut stack farklı değilse önerilen yapı:
+
+Frontend:
+- Next.js / React
+- TypeScript strict mode
+- React Flow veya benzeri bir graph editor
+- Tailwind / mevcut design system
+- TanStack Query
+- Zustand veya mevcut state çözümü
+- Realtime execution updates için Supabase Realtime veya WebSocket/SSE
+- Form validation için Zod
+
+Backend:
+- Next.js server actions/API routes veya mevcut backend framework
+- Supabase Auth
+- PostgreSQL
+- Supabase RLS
+- Edge Functions veya ayrı worker servisi
+- Queue sistemi:
+  - Tercihen Redis + BullMQ
+  - Mevcut altyapı uygunsa Supabase/Postgres tabanlı job queue
+  - Production ölçeğinde ayrı worker process
+- Cron/scheduler:
+  - pg_cron, Supabase scheduled functions veya queue scheduler
+- Webhook ingestion endpoint'leri
+- OAuth callback endpoint'leri
+- Secret encryption
+- Structured logging
+
+AI:
+- Bir provider abstraction katmanı
+- xAI / Grok birinci sınıf provider
+- OpenAI
+- Gemini
+- Groq
+- Gerekirse fallback chain
+- Model, temperature, max tokens ve timeout workspace/node bazında ayarlanabilir
+
+Depolama:
+- Supabase Storage
+- Sosyal medya görselleri, video dosyaları, execution artifact'leri
+- Signed URL
+- Workspace bazlı klasör izolasyonu
+
+Gözlemlenebilirlik:
+- Structured logs
+- Correlation ID
+- Workflow execution ID
+- Node execution ID
+- Error stack
+- Duration
+- Retry count
+- Input/output preview
+- Hassas veri maskeleme
+
+================================================================================
+6. ANA DOMAIN MODELİ
+================================================================================
+
+En az aşağıdaki domain nesnelerini tasarla:
+
+- users
+- workspaces
+- workspace_members
+- roles
+- permissions
+- workflows
+- workflow_versions
+- workflow_nodes
+- workflow_edges
+- workflow_variables
+- workflow_executions
+- node_executions
+- execution_logs
+- execution_artifacts
+- trigger_subscriptions
+- webhook_endpoints
+- schedules
+- jobs
+- job_attempts
+- credentials
+- credential_types
+- oauth_connections
+- provider_connections
+- api_keys
+- audit_logs
+- notifications
+- templates
+- template_categories
+- feature_flags
+
+Social OS:
+- social_accounts
+- social_profiles
+- brand_profiles
+- content_pillars
+- content_ideas
+- content_items
+- content_versions
+- approval_requests
+- approval_actions
+- publishing_jobs
+- publishing_attempts
+- social_posts
+- social_metrics
+- content_experiments
+- telegram_connections
+- telegram_messages
+
+CRM:
+- crm_tables
+- crm_fields
+- crm_records
+- crm_record_values veya JSONB tabanlı güvenli model
+- crm_views
+- crm_relations
+- contacts
+- companies
+- deals
+- tasks
+- notes
+- activities
+- tags
+- pipelines
+- pipeline_stages
+
+Her ana tabloda mümkün olduğunca:
+- id
+- workspace_id
+- created_by
+- created_at
+- updated_at
+- deleted_at
+- metadata JSONB
+- status
+alanlarını standartlaştır.
+
+Soft delete gereken nesnelerde deleted_at kullan.
+Workflow ve içerik gibi kritik nesnelerde versiyonlama uygula.
+
+================================================================================
+7. SUPABASE VE RLS GEREKSİNİMLERİ
+================================================================================
+
+Tüm tenant verileri workspace_id ile izole edilmelidir.
+
+RLS kuralları:
+- Kullanıcı yalnızca üyesi olduğu workspace verilerini görebilir.
+- Role göre read/write/admin yetkisi uygulanır.
+- Secret tabloları doğrudan client tarafından okunamaz.
+- Credentials ve OAuth token'ları client'a plaintext dönmez.
+- Service role yalnızca backend/worker içinde kullanılmalıdır.
+- Webhook public endpoint'leri kontrollü ve imzalı olmalıdır.
+- Approval token'ları süreli ve tek kullanımlık olmalıdır.
+- Telegram callback'leri signature/token doğrulaması yapmalıdır.
+- Execution loglarında hassas alanlar maskelenmelidir.
+
+Roller:
+- owner
+- admin
+- builder
+- operator
+- analyst
+- viewer
+
+Örnek yetkiler:
+- owner: tüm yetkiler
+- admin: workspace yönetimi, bağlantılar, workflow CRUD
+- builder: workflow oluşturma/düzenleme/test
+- operator: workflow çalıştırma, execution izleme, retry
+- analyst: analytics ve salt okunur execution
+- viewer: sınırlı okuma
+
+Migration dosyaları:
+- Sıralı
+- İdempotent olmaya yakın
+- Index'leri içeren
+- Foreign key'leri açık
+- Cascade davranışları düşünülmüş
+- RLS policy'leri ayrı ve okunabilir
+- Gerekirse database function ve trigger'ları içeren
+şekilde hazırlanmalıdır.
+
+Önemli index'ler:
+- workspace_id
+- workflow_id
+- execution_id
+- status
+- scheduled_at
+- created_at
+- provider
+- external_id
+- webhook_path
+- idempotency_key
+
+================================================================================
+8. WORKFLOW TANIMI VE JSON ŞEMASI
+================================================================================
+
+Workflow'lar JSON olarak temsil edilebilmeli; fakat sorgulama ve execution history için normalize
+edilmiş tablolarda da saklanmalıdır.
+
+Örnek üst seviye workflow şeması:
+
+{
+  "id": "uuid",
+  "workspaceId": "uuid",
+  "name": "Günlük AI İçerik Akışı",
+  "description": "...",
+  "status": "draft|active|paused|archived",
+  "version": 3,
+  "settings": {
+    "timezone": "Europe/Istanbul",
+    "maxExecutionTimeMs": 300000,
+    "concurrency": 3,
+    "errorStrategy": "stop|continue|error-branch",
+    "saveSuccessfulExecutions": true,
+    "saveFailedExecutions": true
+  },
+  "nodes": [],
+  "edges": [],
+  "variables": {},
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+
+Node şeması:
+
+{
+  "id": "node_uuid",
+  "type": "trigger.schedule",
+  "name": "Her gün 09:00",
+  "position": { "x": 120, "y": 240 },
+  "config": {},
+  "credentials": [],
+  "inputSchema": {},
+  "outputSchema": {},
+  "retryPolicy": {
+    "maxAttempts": 3,
+    "backoff": "exponential",
+    "initialDelayMs": 1000
+  },
+  "timeoutMs": 30000,
+  "continueOnFail": false
+}
+
+Edge şeması:
+
+{
+  "id": "edge_uuid",
+  "source": "node_a",
+  "sourceHandle": "success",
+  "target": "node_b",
+  "targetHandle": "input",
+  "condition": null
+}
+
+Node config'leri Zod/JSON Schema ile doğrulanmalıdır.
+Her node type için:
+- config schema
+- input schema
+- output schema
+- credential requirements
+- execute function
+- test function
+- icon
+- category
+- documentation
+tanımlanmalıdır.
+
+================================================================================
+9. WORKFLOW ENGINE YÜRÜTME SEMANTİĞİ
+================================================================================
+
+Engine aşağıdaki özellikleri desteklemelidir:
+
+- Directed graph execution
+- DAG kontrolü
+- Kontrollü loop node'u dışında cycle engelleme
+- Trigger ile execution başlatma
+- Manual test execution
+- Selected node'a kadar çalıştırma
+- Tek node test etme
+- Input pinning / mock input
+- Branching
+- Merge
+- Parallel branches
+- Wait/delay
+- Retry
+- Timeout
+- Cancellation
+- Pause/resume
+- Human approval
+- Error branch
+- Continue on fail
+- Idempotency
+- Deduplication
+- Rate limit
+- Concurrency limit
+- Execution priority
+- Scheduled execution
+- Webhook response mode
+- Sub-workflow çağırma
+- Reusable workflow
+- Version pinning
+
+Execution state'leri:
+
+Workflow execution:
+- queued
+- running
+- waiting
+- succeeded
+- partially_succeeded
+- failed
+- cancelled
+- timed_out
+
+Node execution:
+- pending
+- queued
+- running
+- waiting
+- succeeded
+- skipped
+- failed
+- cancelled
+- timed_out
+
+Her node'un input ve output'u kaydedilmelidir.
+Ancak:
+- Büyük payload'lar artifact storage'a alınmalı
+- Hassas alanlar maskelenmeli
+- Maksimum saklama boyutu uygulanmalı
+- Retention policy tanımlanmalı
+
+================================================================================
+10. QUEUE, WORKER VE JOB SİSTEMİ
+================================================================================
+
+UI request'i içinde uzun workflow çalıştırma.
+
+Akış:
+1. Trigger workflow execution kaydı oluşturur.
+2. Execution queue'ya job ekler.
+3. Worker workflow graph'ını ve sabitlenmiş version'ı yükler.
+4. Uygun node'ları sırayla veya paralel çalıştırır.
+5. Her node için node_execution kaydı açar.
+6. Log ve heartbeat günceller.
+7. Retry gerekiyorsa yeni attempt oluşturur.
+8. Waiting node'larında execution'ı askıya alır.
+9. Approval veya delay tamamlanınca devam ettirir.
+10. Son durumu ve özet metrikleri yazar.
+
+Job alanları:
+- id
+- workspace_id
+- execution_id
+- node_execution_id
+- type
+- status
+- priority
+- payload
+- run_at
+- locked_at
+- locked_by
+- heartbeat_at
+- attempts
+- max_attempts
+- idempotency_key
+- last_error
+
+Worker:
+- Graceful shutdown
+- Heartbeat
+- Stalled job recovery
+- Poison message handling
+- Dead-letter queue
+- Concurrency control
+- Workspace fair-use
+- Provider rate-limit awareness
+- Distributed lock
+desteklemelidir.
+
+================================================================================
+11. NODE KATALOĞU
+================================================================================
+
+MVP'de aşağıdaki node ailelerini kur.
+
+A. Trigger Nodes
+- Manual Trigger
+- Webhook Trigger
+- Schedule/Cron Trigger
+- Interval Trigger
+- CRM Record Created
+- CRM Record Updated
+- CRM Stage Changed
+- Social Content Approved
+- Social Post Published
+- Social Metrics Updated
+- Telegram Command Trigger
+
+B. Logic Nodes
+- If
+- Switch
+- Filter
+- Merge
+- Split
+- Loop Over Items
+- Stop
+- Error Trigger
+- Try/Catch benzeri error branch
+- Wait/Delay
+- Human Approval
+
+C. Data Nodes
+- Set Fields
+- Map Fields
+- Rename Fields
+- JSON Parse
+- JSON Stringify
+- Text Template
+- Date/Time
+- Math
+- Sort
+- Limit
+- Deduplicate
+- Aggregate
+- Code Node
+
+D. HTTP/API Nodes
+- HTTP Request
+- GraphQL Request
+- Webhook Response
+- OAuth2 API Request
+
+E. AI Nodes
+- AI Chat Completion
+- Structured Output
+- Prompt Template
+- Content Generator
+- Summarizer
+- Classifier
+- Extractor
+- Sentiment
+- Brand Voice Rewriter
+- Image Brief Generator
+- Social Post Generator
+- Thread Generator
+- Carousel Script Generator
+- Reel Script Generator
+
+F. Provider Nodes
+- xAI / Grok
+- OpenAI
+- Gemini
+- Groq
+
+G. Social Nodes
+- X Create Post
+- X Create Thread
+- X Upload Media
+- Instagram Create Media Container
+- Instagram Publish Media
+- Instagram Publish Reel
+- Social Fetch Metrics
+- Social Schedule Post
+
+H. Telegram Nodes
+- Send Message
+- Send Approval Card
+- Wait for Approval
+- Edit Message
+- Send Result Notification
+
+I. CRM Nodes
+- Create Record
+- Find Record
+- Update Record
+- Delete/Archive Record
+- Add Note
+- Create Task
+- Move Deal Stage
+- List Records
+
+J. Utility Nodes
+- Email Send
+- File Upload
+- File Download
+- Storage Signed URL
+- Sub-workflow
+- Audit Event
+- Notification
+
+Her node için bir “test node” butonu bulunmalıdır.
+
+================================================================================
+12. CODE NODE GÜVENLİĞİ
+================================================================================
+
+Code node doğrudan ana server process'inde eval ile çalıştırılmamalıdır.
+
+Uygulanabilecek çözümler:
+- Sandboxed isolate
+- Ayrı worker/container
+- Kısıtlı runtime
+- CPU ve memory limiti
+- Timeout
+- Network erişim politikası
+- Secret allowlist
+- Yasaklanmış modüller
+- Output size limiti
+
+MVP'de güvenli sandbox hazır değilse:
+- Code node'u feature flag arkasında tut.
+- Production'da varsayılan kapalı yap.
+- UI'da riskli beta olarak açıkça belirt.
+- eval veya new Function kullanma.
+
+================================================================================
+13. CREDENTIAL VAULT VE SECRET YÖNETİMİ
+================================================================================
+
+Credential türleri:
+- API key
+- Bearer token
+- Basic auth
+- OAuth2
+- Custom headers
+- Telegram bot token
+- xAI API key
+- OpenAI API key
+- Gemini API key
+- Groq API key
+- X OAuth
+- Meta/Instagram OAuth
+
+Gereksinimler:
+- Secret değerler encrypted at rest tutulmalı.
+- Encryption key environment secret olarak saklanmalı.
+- Client'a hiçbir zaman gerçek secret gönderilmemeli.
+- UI yalnızca masked preview göstermeli.
+- Credential test endpoint'i olmalı.
+- Son test zamanı ve test sonucu saklanmalı.
+- Credential kullanımını audit et.
+- Credential silinmeden önce bağlı workflow'ları göster.
+- Refresh token rotation destekle.
+- Token expiration takip et.
+- OAuth refresh başarısızsa bağlantıyı “needs_reauth” yap.
+
+Credential scope:
+- Workspace
+- Private/user
+- Shared role-based
+
+================================================================================
+14. WEBHOOK ALTYAPISI
+================================================================================
+
+Her webhook trigger:
+- Benzersiz public URL
+- Test URL
+- Production URL
+- Secret/signature
+- Allowed methods
+- Expected content type
+- Optional schema validation
+- Response mode
+- Rate limit
+- Replay protection
+- Idempotency
+- IP allowlist opsiyonu
+desteklemelidir.
+
+Test modu:
+- Builder “Listen for test event” durumuna geçer.
+- Gelen örnek payload node panelinde gösterilir.
+- Kullanıcı alanları node mapping'de seçebilir.
+- Test listener süreli olmalıdır.
+
+Production modu:
+- Yalnızca active workflow çalışır.
+- Workflow version sabitlenir.
+- Her request correlation ID alır.
+- Hızlı acknowledge gerekirse 202 döndürülür.
+- “Respond immediately” ve “Respond with Webhook Response node” seçenekleri desteklenir.
+
+================================================================================
+15. SCHEDULE VE ZAMAN DİLİMİ
+================================================================================
+
+Varsayılan timezone:
+Europe/Istanbul
+
+Destek:
+- Belirli tarih/saat
+- Her X dakika/saat
+- Günlük
+- Haftalık
+- Aylık
+- Cron expression
+- Workspace timezone
+- Node bazlı timezone
+- DST davranışı
+- Missed schedule policy:
+  - skip
+  - run once
+  - catch up limited
+
+Kullanıcıya cron ifadesi yazdırmak zorunda bırakma.
+Görsel schedule builder sun; gelişmiş kullanıcılar için cron alanı ekle.
+
+================================================================================
+16. AI PROVIDER ABSTRACTION
+================================================================================
+
+Mevcut AI katmanını tek provider'a kilitleme.
+
+Ortak interface:
+
+generateText({
+  provider,
+  model,
+  messages,
+  systemPrompt,
+  temperature,
+  maxTokens,
+  responseFormat,
+  timeout,
+  metadata
+})
+
+generateStructured({
+  schema,
+  ...
+})
+
+Provider'lar:
+- xAI/Grok
+- OpenAI
+- Gemini
+- Groq
+
+Grok/xAI gerçek provider olarak birinci sınıf desteklenmelidir.
+Mevcut Groq, Gemini ve OpenAI bağlantıları korunmalıdır.
+
+Fallback örneği:
+1. xAI/Grok
+2. OpenAI
+3. Gemini
+4. Groq
+
+Ancak fallback:
+- Kullanıcı tarafından açılıp kapatılabilir.
+- Maliyet ve davranış farkı UI'da belirtilir.
+- Structured output uyumluluğu kontrol edilir.
+- Provider hatası ile validation hatası ayrılır.
+- Rate limit özel hata olarak işlenir.
+- Prompt ve output logları hassasiyet ayarlarına göre saklanır.
+
+AI node ayarları:
+- Provider
+- Model
+- System prompt
+- User prompt template
+- Variables
+- Temperature
+- Max tokens
+- JSON schema
+- Retry
+- Fallback
+- Brand voice
+- Language
+- Content safety rules
+
+================================================================================
+17. EXPRESSION VE VARIABLE SİSTEMİ
+================================================================================
+
+Kullanıcı önceki node output'larını sonraki node'larda kullanabilmelidir.
+
+Örnek:
+{{ nodes.webhook.output.body.email }}
+{{ nodes.crm_contact.output.id }}
+{{ workflow.variables.brandTone }}
+{{ execution.startedAt }}
+{{ $now }}
+{{ $json.name }}
+
+Expression editor:
+- Autocomplete
+- Node output browser
+- Type preview
+- Test evaluation
+- Undefined alan uyarısı
+- Secret masking
+- Syntax highlighting
+
+Basit kullanıcılar için mapping UI sun:
+- Sol panelde önceki node output ağacı
+- Sağ panelde hedef input alanları
+- Drag/drop veya seçerek eşleme
+
+Expression motoru güvenli olmalı.
+Arbitrary JavaScript execution olmamalıdır.
+
+================================================================================
+18. BUILDER UI / UX
+================================================================================
+
+Ana sayfa:
+- Workflow listesi
+- Arama
+- Durum filtreleri
+- Son çalışma
+- Başarı oranı
+- Hata sayısı
+- Klasörler/tags
+- Yeni workflow
+- Şablondan oluştur
+
+Builder yerleşimi:
+- Sol: node kütüphanesi
+- Orta: graph canvas
+- Sağ: node configuration panel
+- Üst: workflow adı, draft/active durumu, save, test, activate
+- Alt veya ayrı drawer: execution/log paneli
+
+Builder özellikleri:
+- Drag/drop node
+- Node search
+- Category tabs
+- Zoom
+- Minimap
+- Snap grid
+- Multi-select
+- Copy/paste
+- Duplicate
+- Undo/redo
+- Keyboard shortcuts
+- Auto-layout
+- Sticky note
+- Node comment
+- Group/section
+- Connection validation
+- Invalid node badge
+- Unsaved changes indicator
+- Version history
+- Publish/activate workflow
+- Test workflow
+- Run from selected node
+- Pin data
+- Inspect input/output
+- Error branch connection
+- Loading/running animations
+- Execution path highlight
+- Dark/light mode uyumu
+
+Node kartında:
+- Icon
+- Name
+- Short status
+- Credential warning
+- Error badge
+- Last test
+- Input/output handles
+
+Node paneli sekmeleri:
+- Parameters
+- Credentials
+- Input
+- Output
+- Settings
+- Logs
+- Documentation
+
+Kullanıcı deneyimi:
+- Teknik olmayan kullanıcı için anlaşılır.
+- Gelişmiş ayarlar progressive disclosure ile açılır.
+- JSON ve expression detayları isteyen kullanıcıya erişilebilir.
+- Kaydetmeden sayfadan ayrılmada uyarı ver.
+- Aktif workflow editlenince draft version oluştur.
+- Değişiklikler active version'a otomatik uygulanmamalı.
+
+================================================================================
+19. WORKFLOW VERSİYONLAMA
+================================================================================
+
+Her kaydetme versiyon oluşturmak zorunda değildir.
+“Draft autosave” ve “published version” ayrımı kullan.
+
+- Draft sürekli güncellenebilir.
+- Activate/Publish işleminde immutable version oluştur.
+- Execution her zaman belirli version ID ile ilişkilendirilir.
+- Eski execution'lar eski version'ı göstermelidir.
+- Rollback yapılabilmelidir.
+- Version diff görüntüsü eklenmelidir.
+- Node ekleme/silme/config değişiklikleri diff'te görünmelidir.
+
+================================================================================
+20. EXECUTION HISTORY VE DEBUG
+================================================================================
+
+Execution listesi:
+- Tarih
+- Workflow
+- Version
+- Trigger
+- Status
+- Duration
+- Başarılı node
+- Hatalı node
+- Retry count
+- Başlatan kullanıcı/sistem
+
+Execution detail:
+- Graph üzerinde yürütülen yol
+- Her node'un input/output'u
+- Başlangıç/bitiş zamanı
+- Süre
+- Loglar
+- Hata stack'i
+- Retry bilgisi
+- Credential adı; secret değeri değil
+- Provider request ID
+- External post ID
+- Artifact'ler
+- “Retry failed node”
+- “Retry from this node”
+- “Clone as test execution”
+- “Cancel”
+- “Download sanitized JSON”
+
+Log seviyeleri:
+- debug
+- info
+- warn
+- error
+
+Production'da debug log retention sınırlı olabilir.
+
+================================================================================
+21. ERROR HANDLING
+================================================================================
+
+Normalize edilmiş hata modeli:
+
+{
+  "code": "PROVIDER_RATE_LIMIT",
+  "message": "X API rate limit aşıldı.",
+  "retryable": true,
+  "provider": "x",
+  "httpStatus": 429,
+  "details": {},
+  "originalError": "masked",
+  "occurredAt": "..."
+}
+
+Hata sınıfları:
+- ValidationError
+- AuthenticationError
+- AuthorizationError
+- CredentialError
+- ProviderError
+- RateLimitError
+- TimeoutError
+- NetworkError
+- WorkflowConfigError
+- ExecutionCancelledError
+- InternalError
+
+UI mesajı kullanıcı dostu olmalı.
+Teknik detay log drawer içinde gösterilmelidir.
+
+================================================================================
+22. SOCIAL OS MODÜLÜ
+================================================================================
+
+Social OS, Core Automation Engine üzerinde çalışan ikinci ürün yüzeyidir.
+
+Hedef kitle:
+- Türkçe konuşan AI meraklıları
+- Girişimciler
+- Indie hacker'lar
+- SaaS kurucuları
+- Teknoloji üreticileri
+- Kişisel marka oluşturan uzmanlar
+
+Ana tema:
+AI odaklı girişimcilik ve teknoloji içerikleri.
+
+Varsayılan içerik sütunları:
+- AI araçları
+- AI ile iş kurma
+- SaaS fikirleri
+- Ürün geliştirme
+- Growth ve dağıtım
+- Otomasyon
+- No-code/low-code
+- Kurucu günlükleri
+- Başarısızlıklardan dersler
+- İş modeli analizleri
+- Yeni AI ürünleri
+- Türkiye'de girişimcilik
+- Global startup trendleri
+- Verimlilik sistemleri
+- Prompt engineering
+- Agentic workflow'lar
+
+Social OS sayfaları:
+
+1. Dashboard
+   - Bugünkü içerikler
+   - Onay bekleyenler
+   - Planlanan yayınlar
+   - Başarısız yayınlar
+   - Son 7/30 gün performansı
+   - En iyi konu
+   - En iyi saat
+   - En iyi format
+
+2. Accounts
+   - X hesabı bağla
+   - Instagram hesabı bağla
+   - Telegram bağla
+   - Bağlantı durumu
+   - Token son kullanma
+   - Reconnect
+   - Permission bilgisi
+
+3. Brand Studio
+   - Marka adı
+   - Marka sesi
+   - Hedef kitle
+   - Yasaklı kelimeler
+   - Tercih edilen CTA
+   - Ton
+   - İçerik örnekleri
+   - Rakip/ilham hesapları
+   - İçerik sütunları
+   - Dil
+   - Emoji kullanımı
+   - Mizah seviyesi
+   - Tekniklik seviyesi
+
+4. Idea Bank
+   - AI tarafından üretilen fikirler
+   - Manuel fikir
+   - Kaynak URL
+   - Etiket
+   - İçerik sütunu
+   - Öncelik
+   - Durum
+   - Potansiyel skor
+   - Tekrar kontrolü
+
+5. Content Studio
+   - X post
+   - Thread
+   - Instagram carousel
+   - Reel script
+   - Caption
+   - Hook
+   - CTA
+   - Hashtag
+   - Görsel brief
+   - Alternatif versiyonlar
+   - Platforma göre uyarlama
+   - AI rewrite
+   - Brand voice check
+   - Fact-check checklist alanı
+   - Onaya gönder
+
+6. Calendar
+   - Month/week/day
+   - Draft
+   - Approval pending
+   - Approved
+   - Scheduled
+   - Publishing
+   - Published
+   - Failed
+   - Drag/drop reschedule
+   - Platform filtresi
+   - Seri filtresi
+
+7. Approval Center
+   - İçerik preview
+   - Platform
+   - Planlanan saat
+   - Onayla
+   - Düzenle
+   - Atla
+   - Reddet
+   - Yeni varyasyon üret
+   - Telegram işlem geçmişi
+
+8. Publishing Queue
+   - Sıradaki işler
+   - Rate limit
+   - Retry
+   - Manual publish
+   - Cancel
+   - Reschedule
+   - Provider response
+   - External post URL
+
+9. Analytics
+   - Impression
+   - Reach
+   - Like
+   - Reply
+   - Repost/share
+   - Save
+   - Profile visit
+   - Link click
+   - Follower delta
+   - Engagement rate
+   - İçerik sütunu performansı
+   - Saat performansı
+   - Format performansı
+   - Hook performansı
+   - CTA performansı
+   - AI-generated vs manually edited comparison
+
+================================================================================
+23. SOCIAL OS ANA WORKFLOW
+================================================================================
+
+Hazır template:
+
+“Günlük AI ve Girişimcilik İçerik Motoru”
+
+Schedule Trigger: Her gün 08:30 Europe/Istanbul
+→ Son içerikleri ve tekrarları kontrol et
+→ İçerik sütunu seç
+→ Grok ile 5 fikir üret
+→ Puanla
+→ En iyi fikri seç
+→ X postu üret
+→ Thread varyasyonu üret
+→ Instagram carousel outline üret
+→ Görsel brief üret
+→ Brand voice kontrolü
+→ Riskli iddiaları işaretle
+→ Telegram approval card gönder
+→ Wait for Approval
+→ Onaylanırsa içerik takvimine yaz
+→ Planlanan saatte X/Instagram publish
+→ Sonucu Telegram'a bildir
+→ 1 saat, 24 saat ve 72 saat sonra metrikleri çek
+→ Analytics tablosuna yaz
+→ Gelecek içerik önerilerini güncelle
+
+Approval seçenekleri:
+- Onayla
+- Düzenle
+- Yeni varyasyon
+- Bugün atla
+- Reddet
+
+Telegram callback işlemleri:
+- Callback token doğrula
+- Kullanıcı/workspace yetkisini kontrol et
+- Approval request status kontrol et
+- Tekrar kullanımını engelle
+- Workflow execution'ı resume et
+- Audit log yaz
+- Telegram mesajını güncelle
+
+================================================================================
+24. X ENTEGRASYONU
+================================================================================
+
+X hesabı OAuth ile bağlanmalıdır.
+Kullanıcı yetkisi olmadan paylaşım yapma.
+
+Destek:
+- Create post
+- Reply
+- Thread
+- Media upload, API ve hesap erişimine bağlı olarak
+- Delete post, izin varsa
+- Fetch post metrics
+- Token refresh/reauth
+- Rate limit handling
+
+Thread yayınlama:
+1. İlk post oluştur
+2. Dönen post ID'yi al
+3. Sonraki postu reply olarak oluştur
+4. Her adımı execution log'a yaz
+5. Ortada hata olursa partial success durumunu kaydet
+6. Kullanıcıya hangi postların yayınlandığını göster
+
+Idempotency:
+- Aynı publishing job iki kez paylaşım yapmamalı.
+- external_id ve idempotency_key saklanmalı.
+- Worker retry sırasında daha önce yayınlanmış adımı kontrol etmeli.
+
+================================================================================
+25. INSTAGRAM ENTEGRASYONU
+================================================================================
+
+Instagram yayınlama akışı resmi platform API'lerine uygun olmalıdır.
+
+Desteklenebilen formatlar, hesap tipi ve izinlere göre:
+- Single image
+- Carousel
+- Reel/video
+- Caption
+- Publish status polling
+- Metrics fetch
+
+Genel publish akışı:
+1. Medya dosyasını doğrula
+2. Public/signed media URL üret
+3. Media container oluştur
+4. Container processing durumunu kontrol et
+5. Publish çağrısı yap
+6. External media ID sakla
+7. Sonucu logla
+8. Başarısızsa retry policy uygula
+
+UI'da:
+- Hesap veya API izinleri desteklemiyorsa özelliği gizleme.
+- Özelliği disabled gösterip nedenini açıkla.
+- Gereken account type ve permission'ları belirt.
+
+================================================================================
+26. TELEGRAM ENTEGRASYONU
+================================================================================
+
+Mevcut Telegram altyapısını yeniden kullan.
+
+Bağlantı:
+- Bot token
+- Chat ID
+- Workspace connection
+- Test message
+
+Kullanım:
+- Approval card
+- Günlük fikir özeti
+- Yayın sonucu
+- Hata bildirimi
+- Workflow başarısızlık uyarısı
+- Manuel komutlar
+
+Örnek komutlar:
+- /today
+- /pending
+- /approve
+- /skip
+- /queue
+- /status
+
+Güvenlik:
+- Allowed chat/user list
+- Signed callback data
+- Expiring approval token
+- Replay protection
+- Workspace verification
+
+================================================================================
+27. CRM / NOTION TARZI WORKSPACE
+================================================================================
+
+CRM, sabit birkaç tabloyla sınırlı kalmamalı.
+
+Kullanıcı:
+- Özel tablo oluşturabilmeli
+- Alan ekleyebilmeli
+- Görünüm oluşturabilmeli
+- Filtre/sort/group yapabilmeli
+- Table, kanban ve calendar görünümü kullanabilmeli
+- Kayıtları ilişkilendirebilmeli
+- Otomasyon trigger'ı kurabilmeli
+
+Alan türleri:
+- Text
+- Long text
+- Number
+- Currency
+- Checkbox
+- Select
+- Multi-select
+- Date
+- Date-time
+- Email
+- Phone
+- URL
+- User
+- Relation
+- Formula
+- Status
+- File
+- JSON
+- Created time
+- Updated time
+
+Hazır CRM tabloları:
+- Contacts
+- Companies
+- Deals
+- Tasks
+- Notes
+- Activities
+
+Workflow trigger örnekleri:
+- Record created
+- Record updated
+- Field changed
+- Status changed
+- Record matches filter
+- Date reached
+
+CRM action örnekleri:
+- Create record
+- Update record
+- Find record
+- Upsert
+- Add relation
+- Add note
+- Move kanban stage
+- Create task
+
+================================================================================
+28. API VE SERVİS KATMANI
+================================================================================
+
+Aşağıdaki servis sınırlarını oluştur:
+
+- WorkflowService
+- WorkflowVersionService
+- ExecutionService
+- NodeRegistry
+- NodeExecutor
+- QueueService
+- SchedulerService
+- WebhookService
+- CredentialService
+- OAuthService
+- ProviderService
+- AIService
+- SocialPublishingService
+- ApprovalService
+- TelegramService
+- CRMService
+- AnalyticsService
+- AuditService
+- NotificationService
+- StorageService
+
+API endpoint örnekleri:
+
+Workflows:
+- GET /api/workflows
+- POST /api/workflows
+- GET /api/workflows/:id
+- PATCH /api/workflows/:id
+- DELETE /api/workflows/:id
+- POST /api/workflows/:id/test
+- POST /api/workflows/:id/activate
+- POST /api/workflows/:id/pause
+- GET /api/workflows/:id/versions
+- POST /api/workflows/:id/rollback
+
+Executions:
+- GET /api/executions
+- GET /api/executions/:id
+- POST /api/executions/:id/cancel
+- POST /api/executions/:id/retry
+- GET /api/executions/:id/logs
+
+Credentials:
+- GET /api/credentials
+- POST /api/credentials
+- POST /api/credentials/:id/test
+- DELETE /api/credentials/:id
+
+OAuth:
+- GET /api/oauth/:provider/start
+- GET /api/oauth/:provider/callback
+- POST /api/oauth/:connectionId/refresh
+- DELETE /api/oauth/:connectionId
+
+Webhooks:
+- ALL /api/hooks/:workspaceSlug/:webhookPath
+- ALL /api/hooks-test/:sessionId
+
+Social:
+- GET /api/social/accounts
+- POST /api/social/content
+- POST /api/social/content/:id/request-approval
+- POST /api/social/content/:id/schedule
+- POST /api/social/content/:id/publish
+- GET /api/social/analytics
+
+Telegram:
+- POST /api/telegram/webhook/:connectionId
+
+CRM:
+- CRUD /api/crm/tables
+- CRUD /api/crm/records
+- CRUD /api/crm/views
+
+Tüm endpoint'lerde:
+- auth
+- workspace membership
+- permission
+- validation
+- rate limit
+- audit
+- structured error
+uygulanmalıdır.
+
+================================================================================
+29. REALTIME DURUM GÜNCELLEMELERİ
+================================================================================
+
+Workflow çalışırken builder ve execution detail ekranı canlı güncellenmelidir.
+
+Event'ler:
+- execution.created
+- execution.started
+- execution.waiting
+- execution.succeeded
+- execution.failed
+- execution.cancelled
+- node.started
+- node.succeeded
+- node.failed
+- node.retrying
+- node.waiting
+- log.created
+- approval.requested
+- approval.resolved
+- publishing.started
+- publishing.succeeded
+- publishing.failed
+
+Frontend, polling'e bağımlı kalmadan Supabase Realtime/WebSocket/SSE üzerinden güncellenmelidir.
+Fallback polling eklenebilir.
+
+================================================================================
+30. ANALYTICS
+================================================================================
+
+Core Automation analytics:
+- Total executions
+- Success rate
+- Failure rate
+- Average duration
+- P95 duration
+- Most failing workflows
+- Most failing nodes
+- Provider error distribution
+- Retry count
+- Queue waiting time
+- Active workflows
+- Daily execution volume
+
+Social analytics:
+- Platform
+- Content type
+- Content pillar
+- Publish hour
+- Weekday
+- Hook
+- CTA
+- Engagement
+- Reach/impression
+- Follower impact
+- Conversion proxy
+- Best/worst content
+
+Analytics hesapları snapshot veya aggregate tablolarla optimize edilebilir.
+Ham metrikleri kaybetme.
+
+================================================================================
+31. NOTIFICATION SİSTEMİ
+================================================================================
+
+Kanallar:
+- In-app
+- Telegram
+- Email, mevcutsa
+
+Olaylar:
+- Workflow failed
+- Workflow timed out
+- Credential expired
+- OAuth reconnect needed
+- Approval requested
+- Content approved/rejected
+- Publish succeeded/failed
+- Queue stalled
+- Daily summary
+
+Notification preference workspace/user bazında ayarlanmalıdır.
+
+================================================================================
+32. GÜVENLİK
+================================================================================
+
+Zorunlu:
+- RLS
+- Server-side permission checks
+- CSRF koruması
+- OAuth state ve PKCE
+- Secret encryption
+- Signed webhooks
+- Rate limiting
+- Input validation
+- Output sanitization
+- SSRF koruması
+- Allowed protocol/host politikası
+- File type ve size validation
+- Malware scanning entegrasyon noktası
+- Audit logs
+- Session güvenliği
+- Token rotation
+- Log redaction
+- SQL injection koruması
+- XSS koruması
+- Tenant isolation tests
+
+HTTP Request node SSRF riskine karşı:
+- localhost
+- private IP ranges
+- metadata endpoints
+- file protocol
+- internal services
+varsayılan olarak engellenmelidir.
+
+================================================================================
+33. TEST STRATEJİSİ
+================================================================================
+
+Unit tests:
+- Node config validation
+- Expression engine
+- Graph validation
+- Branch selection
+- Retry calculation
+- Credential encryption
+- Error normalization
+- Schedule parsing
+- Idempotency
+
+Integration tests:
+- Workflow create/save/activate
+- Manual execution
+- Webhook execution
+- Schedule execution
+- AI node provider mock
+- Telegram approval resume
+- X publishing mock
+- Instagram container flow mock
+- CRM trigger/action
+- RLS isolation
+
+End-to-end tests:
+- Builder'da workflow oluştur
+- Node ekle
+- Bağlantı kur
+- Credential seç
+- Test çalıştır
+- Activate et
+- Webhook gönder
+- Execution detail gör
+- Hata üret ve retry et
+
+Tenant isolation testi:
+- Workspace A kullanıcısı Workspace B verisini görememeli.
+- API, database ve realtime katmanlarında doğrula.
+
+================================================================================
+34. SEED VE DEMO WORKFLOW'LARI
+================================================================================
+
+En az şu örnekleri oluştur:
+
+1. Webhook → AI → Telegram
+2. Schedule → AI Content Generator → Approval → X Publish
+3. CRM Stage Changed → Wait → Telegram Reminder
+4. HTTP Request → If → CRM Upsert
+5. Instagram Approved Content → Publish → Metrics
+6. Failed Workflow → Telegram Error Alert
+7. Sub-workflow örneği
+8. Multi-branch parallel execution örneği
+
+Demo verileri production kullanıcılarına otomatik ekleme.
+Onboarding sırasında “örnek workspace oluştur” seçeneği sun.
+
+================================================================================
+35. ONBOARDING
+================================================================================
+
+İlk giriş:
+1. Workspace oluştur
+2. Kullanım amacı seç:
+   - Otomasyon
+   - Social OS
+   - CRM
+   - Hepsi
+3. AI provider bağla
+4. Telegram bağla
+5. X/Instagram bağla
+6. Şablon seç
+7. Test çalıştır
+8. İlk workflow'u aktive et
+
+Kullanıcı bağlantı yapmadan sistemi gezebilmeli.
+Bağlantı olmayan özellikler için açıklayıcı empty state göster.
+
+================================================================================
+36. ÜRÜN NAVİGASYONU
+================================================================================
+
+Önerilen ana menü:
+
+- Home
+- Automations
+  - Workflows
+  - Executions
+  - Templates
+  - Credentials
+  - Webhooks
+- Social OS
+  - Dashboard
+  - Studio
+  - Ideas
+  - Calendar
+  - Approvals
+  - Queue
+  - Analytics
+  - Accounts
+  - Brand
+- CRM
+  - Tables
+  - Contacts
+  - Companies
+  - Deals
+  - Tasks
+  - Calendar
+- Settings
+  - Workspace
+  - Members
+  - Roles
+  - Providers
+  - OAuth
+  - Notifications
+  - Security
+  - Audit Logs
+  - Billing
+
+================================================================================
+37. PERFORMANS VE ÖLÇEKLENEBİLİRLİK
+================================================================================
+
+- Büyük execution payload'larını DB satırında sınırsız tutma.
+- Cursor pagination kullan.
+- Execution listelerinde uygun index kullan.
+- Workflow graph'ını execution başına gereksiz tekrar sorgulama.
+- Published version snapshot kullan.
+- Queue worker'ları yatay ölçeklenebilir yap.
+- Provider bazlı concurrency limiter ekle.
+- Workspace bazlı rate limit/fair-use uygula.
+- Cron taramasını optimize et.
+- Realtime event'lerini küçük payload'larla gönder.
+- Log retention ve archive politikası belirle.
+- Analytics aggregate job'ları oluştur.
+- N+1 sorguları engelle.
+
+================================================================================
+38. BILLING VE KULLANIM ÖLÇÜMÜNE HAZIRLIK
+================================================================================
+
+Ödeme sistemi MVP kapsamına dahil olmayabilir; ancak usage metering hazır olmalıdır.
+
+Ölç:
+- Workflow execution
+- Node execution
+- AI token kullanımı
+- Provider çağrısı
+- Social publish
+- Storage
+- Active workflow
+- Team member
+- Retention gün sayısı
+
+Tablolar:
+- usage_events
+- usage_daily
+- plan_limits
+- workspace_entitlements
+
+Hardcoded plan kontrolü kullanma.
+Entitlement service oluştur.
+
+================================================================================
+39. GELİŞTİRME FAZLARI
+================================================================================
+
+FAZ 0 — Repository Audit
+- Mevcut stack
+- Auth
+- Supabase
+- n8n iframe
+- AI provider yapısı
+- Telegram altyapısı
+- Scheduler
+- CRM yapısı
+- UI design system
+- Teknik borç
+raporu oluştur.
+
+FAZ 1 — Core Data Model
+- Workspace/RLS kontrolü
+- Workflow tabloları
+- Execution tabloları
+- Credential tabloları
+- Job queue tabloları
+- Audit log
+- Migration
+- Type generation
+
+FAZ 2 — Native Builder
+- Workflow listesi
+- React Flow canvas
+- Node registry
+- Trigger/logic/data/http temel node'ları
+- Save/autosave
+- Validation
+- Test UX
+
+FAZ 3 — Execution Engine
+- Manual execution
+- Queue
+- Worker
+- Sequential graph
+- Branching
+- Retry
+- Logs
+- Realtime
+- Cancellation
+
+FAZ 4 — Triggers
+- Webhook
+- Schedule
+- CRM events
+- Telegram events
+
+FAZ 5 — AI Layer
+- xAI/Grok
+- OpenAI
+- Gemini
+- Groq
+- Structured output
+- Fallback
+- AI nodes
+
+FAZ 6 — Human Approval
+- Approval node
+- Waiting/resume
+- Telegram cards
+- Secure callbacks
+
+FAZ 7 — Social OS
+- Brand studio
+- Idea bank
+- Content studio
+- Calendar
+- Queue
+- X
+- Instagram
+- Analytics
+
+FAZ 8 — CRM Workspace
+- Custom tables
+- Views
+- Records
+- Trigger/action integration
+
+FAZ 9 — Hardening
+- Security tests
+- Load tests
+- RLS tests
+- Observability
+- Retention
+- Dead-letter queue
+- Documentation
+
+Her faz sonunda çalışan bir demo bırak.
+Bir sonraki faz için temel oluşturmayan “sadece UI” teslim etme.
+
+================================================================================
+40. KABUL KRİTERLERİ
+================================================================================
+
+Core Automation Engine tamamlanmış sayılmaz, ta ki:
+
+- Kullanıcı native builder'da workflow oluşturabiliyor.
+- Node sürükleyip bağlayabiliyor.
+- Workflow kaydoluyor.
+- Config validation çalışıyor.
+- Manual test execution çalışıyor.
+- Schedule trigger gerçek job oluşturuyor.
+- Webhook trigger gerçek request ile çalışıyor.
+- If node branch seçiyor.
+- HTTP node gerçek istek yapıyor.
+- AI node en az bir gerçek provider ile çalışıyor.
+- Execution history doğru gösteriliyor.
+- Node input/output görüntüleniyor.
+- Retry çalışıyor.
+- Timeout çalışıyor.
+- Cancel çalışıyor.
+- Hata mesajı ve log görülebiliyor.
+- Active version ve draft ayrımı var.
+- RLS tenant izolasyonu test edilmiş.
+- Secret browser'a sızmıyor.
+- Worker restart sonrası job recovery var.
+- En az bir örnek workflow uçtan uca başarılı.
+
+Social OS tamamlanmış sayılmaz, ta ki:
+
+- Kullanıcı marka profili oluşturabiliyor.
+- AI içerik fikri ve taslağı üretebiliyor.
+- İçerik Telegram onayına gidiyor.
+- Telegram onayı waiting execution'ı resume ediyor.
+- İçerik takvimde planlanıyor.
+- X veya Instagram'da gerçek yayın yapılabiliyor.
+- Publishing result kaydediliyor.
+- Retry/idempotency çalışıyor.
+- Metrik çekme altyapısı en az bir platformda çalışıyor.
+- Başarısız yayın kullanıcıya bildiriliyor.
+
+CRM tamamlanmış sayılmaz, ta ki:
+
+- Kullanıcı tablo ve alan oluşturabiliyor.
+- Table/kanban/calendar görünümü çalışıyor.
+- Kayıt ekleyip güncelleyebiliyor.
+- CRM olayı workflow başlatabiliyor.
+- Workflow CRM kaydı oluşturup güncelleyebiliyor.
+
+================================================================================
+41. UI KALİTE STANDARDI
+================================================================================
+
+- Profesyonel SaaS görünümü
+- Tutarlı spacing
+- Responsive desktop-first builder
+- Erişilebilir form label'ları
+- Klavye kullanımı
+- Loading/skeleton state
+- Empty state
+- Error state
+- Success feedback
+- Toast spam'inden kaçınma
+- Kritik işlemlerde confirmation
+- Workflow activate/pause durumu net
+- “Connected” görünen ama çalışmayan fake integration yok
+- Her bağlantının “Test connection” aksiyonu var
+- Her execution'ın takip edilebilir bir kimliği var
+
+================================================================================
+42. DOKÜMANTASYON
+================================================================================
+
+Aşağıdaki dokümanları üret:
+
+- README
+- Architecture overview
+- Database schema
+- RLS model
+- Workflow JSON format
+- Node development guide
+- Credential security guide
+- Worker deployment guide
+- Environment variables
+- OAuth setup guide
+- X setup guide
+- Instagram setup guide
+- Telegram setup guide
+- Local development
+- Testing
+- Production deployment
+- Incident/debug guide
+- Known limitations
+
+Node development guide şu soruyu cevaplamalı:
+“Yeni bir integration node'u sisteme 30–60 dakika içinde nasıl eklerim?”
+
+================================================================================
+43. ENVIRONMENT VARIABLES
+================================================================================
+
+Örnek olarak:
+
+APP_URL=
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+REDIS_URL=
+CREDENTIAL_ENCRYPTION_KEY=
+WEBHOOK_SIGNING_SECRET=
+X_CLIENT_ID=
+X_CLIENT_SECRET=
+META_APP_ID=
+META_APP_SECRET=
+TELEGRAM_BOT_TOKEN=
+XAI_API_KEY=
+OPENAI_API_KEY=
+GEMINI_API_KEY=
+GROQ_API_KEY=
+WORKER_CONCURRENCY=
+LOG_LEVEL=
+SENTRY_DSN=
+
+Gerçek secret'ları repository'ye yazma.
+.env.example oluştur.
+Startup validation ekle.
+
+================================================================================
+44. ÇIKTI BEKLENTİSİ
+================================================================================
+
+Sadece analiz veya öneri yazma.
+Kod değişikliklerini uygula.
+
+Çalışma sonunda aşağıdakileri açıkça raporla:
+
+1. Mevcut yapı analizi
+2. Verilen mimari kararlar
+3. Oluşturulan migration'lar
+4. Eklenen tablolar ve RLS policy'leri
+5. Eklenen frontend sayfaları
+6. Eklenen backend servisleri
+7. Eklenen node türleri
+8. Worker ve queue yapısı
+9. AI provider entegrasyonları
+10. Social OS özellikleri
+11. CRM entegrasyonu
+12. Çalıştırılan testler
+13. Başarılı örnek workflow
+14. Bilinen eksikler
+15. Production için gereken environment variable ve platform ayarları
+
+Kod kalitesi kontrolü:
+- lint
+- typecheck
+- unit test
+- integration test
+- build
+
+Bir hata varsa saklama; açıkça raporla.
+
+================================================================================
+45. BAŞLANGIÇ GÖREVİ
+================================================================================
+
+Şimdi aşağıdaki sırayla başla:
+
+1. Repository'yi incele.
+2. Mevcut n8n iframe entegrasyonunu, AI sağlayıcı katmanını, Telegram sistemini,
+   Supabase şemasını, auth/RLS yapısını ve CRM ekranlarını haritala.
+3. “Mevcut durum → hedef mimari → migration planı” çıkar.
+4. Native workflow engine için database migration'larını hazırla.
+5. Node registry ve workflow JSON schema'sını oluştur.
+6. Native visual builder'ın ilk çalışan sürümünü yap.
+7. Manual Trigger → Set Fields → If → HTTP Request → AI → Telegram örnek akışını çalıştır.
+8. Execution history ve node loglarını göster.
+9. Ardından Social OS'un Telegram onaylı günlük içerik workflow'unu kur.
+10. Son olarak CRM trigger/action node'larını aynı engine'e bağla.
+
+Her aşamada gerçek kod üret.
+Geçici mock kullanırsan açıkça işaretle ve gerçek entegrasyona geçiş noktasını bırak.
+Yeni sistemi n8n iframe'in üzerine makyaj olarak kurma.
+Ürünün çekirdeği kendi otomasyon motoru olmalıdır.
+
+================================================================================
+46. SON ÜRÜN VİZYONU
+================================================================================
+
+Kullanıcı uygulamaya girdiğinde şunu hissetmeli:
+
+“Burada yalnızca sosyal medya planlamıyorum.
+İşimin bütün operasyonlarını görsel akışlarla otomatikleştirebiliyorum.
+Social OS, CRM, AI, Telegram, API'ler ve gelecekte ekleyeceğim tüm entegrasyonlar
+aynı güçlü otomasyon motorunun üzerinde çalışıyor.”
+
+Bu motor ürünün kalbidir.
+Social OS onun ilk güçlü kullanım alanıdır.
+CRM ise işletme verisini ve aksiyonlarını bu motora bağlayan çalışma alanıdır.
+
+Nihai hedef:
+Türkiye merkezli başlayıp global kullanılabilecek, AI-first, güvenli, genişletilebilir ve
+native bir otomasyon işletim sistemi geliştirmek.

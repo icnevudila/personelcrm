@@ -68,12 +68,14 @@ export default function DashboardHeader({ user, admin = false }) {
   const isAppScoutActive = pathname?.startsWith("/dashboard/app-scout");
   const isMcpActive = pathname?.startsWith("/dashboard/mcp");
   const isN8nActive = pathname?.startsWith("/dashboard/n8n") || pathname?.startsWith("/dashboard/automations");
+  const isSocialActive = pathname?.startsWith("/dashboard/social");
   const isProjectsActive =
     !isDeepWorkActive &&
     !isRoadmapActive &&
     !isAppScoutActive &&
     !isMcpActive &&
     !isN8nActive &&
+    !isSocialActive &&
     (pathname === "/dashboard" ||
       pathname?.startsWith("/dashboard/") ||
       pathname?.startsWith("/projects/"));
@@ -251,6 +253,13 @@ export default function DashboardHeader({ user, admin = false }) {
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
               </svg>
               <span className="hidden sm:inline">Automations</span>
+            </Link>
+            <Link href="/dashboard/social" className={navLinkClass(isSocialActive)} title="Social" onClick={() => setUserMenuOpen(false)}>
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
+              </svg>
+              <span className="hidden sm:inline">Social</span>
             </Link>
             {admin && (
               <Link
