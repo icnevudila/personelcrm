@@ -39,20 +39,59 @@ function createNode(type, index, customPos = null) {
 
 function statusClass(status) {
   if (["succeeded", "partially_succeeded"].includes(status))
-    return "bg-emerald-50 text-emerald-950 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-300 dark:border-emerald-900";
+    return "bg-emerald-950/40 text-emerald-300 border border-emerald-900/30";
   if (["queued", "running", "waiting"].includes(status))
-    return "bg-amber-50 text-amber-955 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-900";
-  return "bg-rose-50 text-rose-955 border-rose-200 dark:bg-rose-950/20 dark:text-rose-300 dark:border-rose-900";
+    return "bg-amber-950/40 text-amber-300 border border-amber-900/30";
+  return "bg-rose-955/20 text-rose-300 border border-rose-900/30";
 }
 
+// Minimalist vector SVG icon definitions to replace amateur emojis
+const ICONS = {
+  manual: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  ),
+  set: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  ),
+  if: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+  ),
+  http: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+    </svg>
+  ),
+  ai: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+    </svg>
+  ),
+  telegram: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+    </svg>
+  ),
+  crm: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  ),
+};
+
 const NODE_THEMES = {
-  "trigger.manual": { border: "border-l-amber-500", icon: "⚡", color: "#f59e0b", label: "Manual Trigger" },
-  "data.set": { border: "border-l-emerald-500", icon: "📋", color: "#10b981", label: "Set Fields" },
-  "logic.if": { border: "border-l-zinc-500", icon: "🔀", color: "#71717a", label: "If" },
-  "http.request": { border: "border-l-purple-500", icon: "🌐", color: "#a855f7", label: "HTTP Request" },
-  "ai.chat": { border: "border-l-indigo-500", icon: "🧠", color: "#6366f1", label: "AI Chat" },
-  "telegram.send": { border: "border-l-sky-500", icon: "✈️", color: "#0ea5e9", label: "Send Message" },
-  "crm.create": { border: "border-l-rose-500", icon: "👤", color: "#f43f5e", label: "Create Record" },
+  "trigger.manual": { border: "border-l-amber-500", icon: ICONS.manual, color: "#f59e0b", label: "Manual Trigger" },
+  "data.set": { border: "border-l-emerald-500", icon: ICONS.set, color: "#10b981", label: "Set Fields" },
+  "logic.if": { border: "border-l-zinc-550", icon: ICONS.if, color: "#71717a", label: "If" },
+  "http.request": { border: "border-l-purple-500", icon: ICONS.http, color: "#a855f7", label: "HTTP Request" },
+  "ai.chat": { border: "border-l-indigo-500", icon: ICONS.ai, color: "#6366f1", label: "AI Chat" },
+  "telegram.send": { border: "border-l-sky-500", icon: ICONS.telegram, color: "#0ea5e9", label: "Send Message" },
+  "crm.create": { border: "border-l-rose-500", icon: ICONS.crm, color: "#f43f5e", label: "Create Record" },
 };
 
 export default function AutomationBuilder() {
@@ -67,7 +106,7 @@ export default function AutomationBuilder() {
 
   // Layout and n8n States
   const [rightTab, setRightTab] = useState("config");
-  const [showDrawer, setShowDrawer] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false); // Modal state
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
   const [palettePosition, setPalettePosition] = useState({ x: 200, y: 200 });
@@ -82,7 +121,7 @@ export default function AutomationBuilder() {
   const [chatMessages, setChatMessages] = useState([
     {
       role: "assistant",
-      content: "Merhaba! Ben senin AI Otomasyon Ajanınım. 🤖\n\nTuvale çift tıklayarak veya `Ctrl+K` tuş kombinasyonuyla yeni node arama paletini açabilirsin. Akışta ne yapmak istediğini yaz, senin için çizelim!"
+      content: "Merhaba! Ben senin AI Otomasyon Ajanınım. Tuvale çift tıklayarak veya Ctrl+K kombinasyonuyla yeni node arama panelini açabilirsin. Akışta ne yapmak istediğini yaz, senin için çizelim!"
     }
   ]);
 
@@ -507,20 +546,20 @@ export default function AutomationBuilder() {
       {/* Main Workspace Area */}
       <div className="grid min-h-0 flex-1 grid-cols-[60px_1fr_340px] relative">
         {/* Slim Left Navigation Panel (n8n Style) */}
-        <aside className="flex flex-col items-center justify-between py-4 border-r border-zinc-800 bg-[#121214] text-zinc-550">
+        <aside className="flex flex-col items-center justify-between py-4 border-r border-zinc-800 bg-[#121214] text-zinc-550 z-20 relative">
           <div className="space-y-4 w-full flex flex-col items-center">
             <button className="h-8 w-8 rounded-lg bg-zinc-900 text-zinc-200 flex items-center justify-center text-xs font-extrabold shadow-md border border-zinc-800 hover:text-white" title="Personal">
               P
             </button>
             <button className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-zinc-850 hover:text-zinc-300" title="Overview">
-              📁
+              O
             </button>
             <button className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-zinc-850 hover:text-zinc-300 relative" title="AI Assistant">
-              🧠
-              <span className="absolute -top-1.5 -right-1.5 bg-purple-600 text-[6px] font-bold text-white px-1 py-0.5 rounded">AI</span>
+              AI
+              <span className="absolute -top-1.5 -right-1.5 bg-purple-600 text-[5px] font-bold text-white px-0.5 py-0.2 rounded">CO</span>
             </button>
           </div>
-          <div className="text-[10px] font-mono text-zinc-600">v1.0</div>
+          <div className="text-[10px] font-mono text-zinc-650">v1.0</div>
         </aside>
 
         {/* Center - Visual Canvas (Dark n8n Theme) */}
@@ -530,10 +569,10 @@ export default function AutomationBuilder() {
           onPointerUp={endDrag}
           onDoubleClick={handleCanvasDoubleClick}
           id="canvas-container"
-          className="relative overflow-auto bg-[#101012] bg-[radial-gradient(circle_at_1px_1px,#222225_1px,transparent_0)] bg-[size:16px_16px]"
+          className="relative overflow-auto bg-[#101012] bg-[radial-gradient(circle_at_1px_1px,#222225_1px,transparent_0)] bg-[size:16px_16px] z-10"
         >
           {/* AI Co-Pilot Floating Input */}
-          <div className="absolute left-6 right-6 top-6 z-10 mx-auto flex max-w-xl gap-2 rounded-2xl border border-zinc-850 bg-[#121214]/95 p-2 shadow-xl backdrop-blur-md">
+          <div className="absolute left-6 right-6 top-6 z-20 mx-auto flex max-w-xl gap-2 rounded-2xl border border-zinc-850 bg-[#121214]/95 p-2 shadow-xl backdrop-blur-md">
             <input
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
@@ -548,7 +587,7 @@ export default function AutomationBuilder() {
               disabled={aiLoading || !aiPrompt}
               className="rounded-xl bg-zinc-100 px-4 py-1.5 text-xs font-semibold text-zinc-900 hover:bg-zinc-250 disabled:opacity-50"
             >
-              {aiLoading ? "Çiziliyor..." : "Akış Çiz ⚡"}
+              Akış Çiz
             </button>
           </div>
 
@@ -592,7 +631,7 @@ export default function AutomationBuilder() {
                   key={node.id}
                   id={`node-${node.id}`}
                   style={{ left: node.position.x, top: node.position.y }}
-                  className="absolute flex items-center group cursor-grab active:cursor-grabbing"
+                  className="absolute flex items-center group cursor-grab active:cursor-grabbing z-20"
                   onPointerDown={(event) => startDrag(event, node)}
                   onDoubleClick={(event) => {
                     event.stopPropagation();
@@ -602,15 +641,15 @@ export default function AutomationBuilder() {
                 >
                   {/* Capsule Card Node */}
                   <div
-                    className={`relative w-44 h-14 rounded-lg bg-[#18181b] border border-zinc-800 border-l-4 flex items-center p-3 shadow-md gap-3 transition-all ${
+                    className={`relative w-44 h-14 rounded-lg bg-[#18181b] border border-zinc-850 border-l-4 flex items-center p-3 shadow-md gap-3 transition-all ${
                       theme.border
-                    } ${isSelected ? "ring-1 ring-orange-500 scale-102 border-zinc-700 bg-zinc-900" : "hover:border-zinc-600"} ${
+                    } ${isSelected ? "ring-1 ring-orange-500 scale-102 border-zinc-700 bg-zinc-900" : "hover:border-zinc-650"} ${
                       isExecuting ? "ring-2 ring-emerald-500 animate-pulse" : ""
                     }`}
                   >
                     {/* Node Icon */}
                     <div className="h-7 w-7 rounded-md bg-[#101012] border border-zinc-800 flex items-center justify-center text-sm shrink-0">
-                      {theme.icon}
+                      <span className="text-xs text-zinc-400 font-bold">{node.type.split(".")[0].toUpperCase().slice(0, 3)}</span>
                     </div>
 
                     {/* Text Container */}
@@ -658,7 +697,7 @@ export default function AutomationBuilder() {
         </main>
 
         {/* Right Side - n8n Copilot Sidebar */}
-        <aside className="flex flex-col border-l border-zinc-800 bg-[#121214]">
+        <aside className="flex flex-col border-l border-zinc-800 bg-[#121214] z-20 relative pointer-events-auto">
           {selectedNode ? (
             /* Selected Node Settings tabs */
             <div className="flex-1 flex flex-col h-full justify-between min-h-0">
@@ -669,7 +708,7 @@ export default function AutomationBuilder() {
                     rightTab === "config" ? "border-b-2 border-zinc-100 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
-                  ⚙️ Düğüm Ayarları
+                  Ayarlar
                 </button>
                 <button
                   onClick={() => setRightTab("ai")}
@@ -677,7 +716,7 @@ export default function AutomationBuilder() {
                     rightTab === "ai" ? "border-b-2 border-zinc-100 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
-                  🤖 AI Ajanı Chat
+                  AI Chat
                 </button>
               </div>
 
@@ -692,7 +731,7 @@ export default function AutomationBuilder() {
                           className={`rounded-xl p-3 text-xs leading-relaxed max-w-[85%] ${
                             msg.role === "user"
                               ? "bg-zinc-800 text-zinc-250 self-end ml-auto"
-                              : "bg-blue-950/20 text-blue-300 border border-blue-900/30"
+                              : "bg-blue-955/20 text-blue-300 border border-blue-900/30"
                           }`}
                         >
                           <p className="font-semibold text-[8px] uppercase tracking-wider opacity-60 mb-1">
@@ -702,8 +741,8 @@ export default function AutomationBuilder() {
                         </div>
                       ))}
                       {chatLoading && (
-                        <div className="rounded-xl p-3 text-xs bg-blue-950/10 text-blue-400 w-[60%] animate-pulse">
-                          Ajan düşünüyor...
+                        <div className="rounded-xl p-3 text-xs bg-blue-955/10 text-blue-400 w-[60%] animate-pulse">
+                          Düşünülüyor...
                         </div>
                       )}
                     </div>
@@ -733,7 +772,7 @@ export default function AutomationBuilder() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-xs font-bold text-zinc-250">{selectedNode.name}</h3>
-                        <p className="text-[9px] font-mono text-zinc-500 mt-0.5">{selectedNode.id}</p>
+                        <p className="text-[9px] font-mono text-zinc-550 mt-0.5">{selectedNode.id}</p>
                       </div>
                       <button
                         onClick={() => deleteNode(selectedNode.id)}
@@ -745,7 +784,7 @@ export default function AutomationBuilder() {
 
                     <div className="space-y-3">
                       <label className="block">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Node Adı</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-550">Node Adı</span>
                         <input
                           value={selectedNode.name}
                           onChange={(event) => updateNode({ ...selectedNode, name: event.target.value })}
@@ -754,7 +793,7 @@ export default function AutomationBuilder() {
                       </label>
 
                       <label className="block">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Config (JSON)</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-550">Config (JSON)</span>
                         <textarea
                           value={JSON.stringify(selectedNode.config, null, 2)}
                           onChange={(event) => {
@@ -764,7 +803,7 @@ export default function AutomationBuilder() {
                               /* parsed on save */
                             }
                           }}
-                          className="mt-1 h-44 w-full resize-y rounded-lg border border-zinc-850 bg-[#141416] p-2 font-mono text-[9px] leading-relaxed text-zinc-300 focus:outline-none"
+                          className="mt-1.5 h-44 w-full resize-y rounded-lg border border-zinc-850 bg-[#141416] p-2 font-mono text-[9px] leading-relaxed text-zinc-300 focus:outline-none"
                         />
                       </label>
                     </div>
@@ -778,7 +817,7 @@ export default function AutomationBuilder() {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-xs font-bold text-zinc-250">What happens next?</h3>
-                  <p className="text-[9px] text-zinc-500 mt-0.5">Akışa eklemek için bir düğüm kategorisine tıklayın:</p>
+                  <p className="text-[9px] text-zinc-550 mt-0.5">Akışa eklemek için bir düğüm kategorisine tıklayın:</p>
                 </div>
 
                 <div className="space-y-2 text-xs">
@@ -786,7 +825,7 @@ export default function AutomationBuilder() {
                     onClick={() => addNode("ai.chat")}
                     className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
                   >
-                    <span>🧠</span>
+                    <span>AI</span>
                     <div>
                       <p className="font-bold text-zinc-200">AI Node</p>
                       <p className="text-[8px] text-zinc-500 mt-0.5">Build autonomous agents, summarize docs, etc.</p>
@@ -797,7 +836,7 @@ export default function AutomationBuilder() {
                     onClick={() => addNode("telegram.send")}
                     className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
                   >
-                    <span>✈️</span>
+                    <span>APP</span>
                     <div>
                       <p className="font-bold text-zinc-200">Action in an app</p>
                       <p className="text-[8px] text-zinc-500 mt-0.5">Do something in Telegram or Google Sheets.</p>
@@ -808,7 +847,7 @@ export default function AutomationBuilder() {
                     onClick={() => addNode("data.set")}
                     className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
                   >
-                    <span>📋</span>
+                    <span>DAT</span>
                     <div>
                       <p className="font-bold text-zinc-200">Data transformation</p>
                       <p className="text-[8px] text-zinc-500 mt-0.5">Manipulate, filter or convert payload fields.</p>
@@ -819,7 +858,7 @@ export default function AutomationBuilder() {
                     onClick={() => addNode("logic.if")}
                     className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
                   >
-                    <span>🔀</span>
+                    <span>FLO</span>
                     <div>
                       <p className="font-bold text-zinc-200">Flow</p>
                       <p className="text-[8px] text-zinc-500 mt-0.5">Branch, logic gates, merge or loop the flow.</p>
@@ -830,7 +869,7 @@ export default function AutomationBuilder() {
                     onClick={() => addNode("http.request")}
                     className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
                   >
-                    <span>🌐</span>
+                    <span>REQ</span>
                     <div>
                       <p className="font-bold text-zinc-200">Core</p>
                       <p className="text-[8px] text-zinc-500 mt-0.5">Run code, make HTTP requests, webhooks.</p>
@@ -841,7 +880,7 @@ export default function AutomationBuilder() {
                     onClick={() => addNode("trigger.manual")}
                     className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
                   >
-                    <span>⚡</span>
+                    <span>TRG</span>
                     <div>
                       <p className="font-bold text-zinc-200">Add trigger</p>
                       <p className="text-[8px] text-zinc-500 mt-0.5">Manual or webhook trigger events to start.</p>
@@ -850,48 +889,51 @@ export default function AutomationBuilder() {
                 </div>
               </div>
 
-              <div className="p-3.5 bg-zinc-950/20 border border-zinc-800 rounded-xl text-[9px] text-zinc-500 leading-relaxed">
-                💬 Sürükle-bırak yaparken kasılma yaşanmaması için DOM optimizasyonu yapıldı (60fps). Herhangi bir düğümü çift tıklayarak parametre çekmecesini alttan kaydırabilirsiniz.
+              <div className="p-3.5 bg-zinc-950/20 border border-zinc-800 rounded-xl text-[9px] text-zinc-550 leading-relaxed">
+                Sürükle-bırak yaparken kasılma yaşanmaması için DOM optimizasyonu yapıldı (60fps). Herhangi bir düğümü çift tıklayarak parametre çekmecesini alttan kaydırabilirsiniz.
               </div>
             </div>
           )}
         </aside>
       </div>
 
-      {/* n8n Style Split Parameters Modal/Drawer (Slides Up from Bottom) */}
+      {/* Premium Liquid Glass Parameter Modal (Centered popup style) */}
       {showDrawer && selectedNode && (
-        <div className="absolute inset-x-0 bottom-0 z-30 h-[48vh] border-t border-zinc-800 bg-[#121214] shadow-2xl flex flex-col">
-          {/* Drawer Header */}
-          <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-3 bg-zinc-900/40">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">⚙️</span>
-              <h3 className="text-sm font-bold text-zinc-200">{selectedNode.name} Ayarları</h3>
-              <span className="text-[9px] font-mono text-zinc-550">({selectedNode.type})</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-fade-in">
+          {/* Glass Card Container */}
+          <div className="w-full max-w-2xl rounded-2xl border border-zinc-700/40 bg-zinc-900/75 backdrop-blur-2xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-zinc-150 flex flex-col max-h-[85vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 mb-4">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-orange-400 bg-orange-950/40 border border-orange-900/30 px-2 py-0.5 rounded-lg">
+                  {selectedNode.type.split(".")[0].toUpperCase()}
+                </span>
+                <h3 className="text-sm font-bold text-zinc-100">{selectedNode.name} Ayarları</h3>
+              </div>
+              <button
+                onClick={() => setShowDrawer(false)}
+                className="text-zinc-400 hover:text-zinc-200 rounded-lg p-1.5 hover:bg-zinc-800/60"
+              >
+                ✕ Kapat
+              </button>
             </div>
-            <button
-              onClick={() => setShowDrawer(false)}
-              className="text-zinc-400 hover:text-zinc-200 rounded-lg p-1 hover:bg-zinc-800"
-            >
-              ✕ Kapat
-            </button>
-          </div>
 
-          {/* Drawer Content */}
-          <div className="flex-1 flex overflow-hidden">
-            {/* Left Column: Parameter Configuration Inputs */}
-            <div className="flex-1 overflow-y-auto p-5 border-r border-zinc-800 space-y-4">
-              <div className="space-y-3">
+            {/* Split Content columns */}
+            <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
+              {/* Parameter Editor Inputs */}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                 <label className="block">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Node İsmi</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-550">Düğüm İsmi</span>
                   <input
                     value={selectedNode.name}
                     onChange={(event) => updateNode({ ...selectedNode, name: event.target.value })}
-                    className="mt-1 w-full rounded-lg border border-zinc-850 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    className="mt-1.5 w-full rounded-lg border border-zinc-800 bg-[#101012] px-3.5 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition"
                   />
                 </label>
 
                 <label className="block">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Yapılandırma (Config)</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-550">Düğüm Konfigürasyonu (JSON)</span>
                   <textarea
                     value={JSON.stringify(selectedNode.config, null, 2)}
                     onChange={(event) => {
@@ -901,25 +943,39 @@ export default function AutomationBuilder() {
                         /* ignored */
                       }
                     }}
-                    className="mt-1 h-36 w-full resize-none rounded-lg border border-zinc-855 bg-zinc-950 p-2.5 font-mono text-[10px] leading-relaxed text-zinc-300 focus:outline-none focus:border-zinc-700"
+                    className="mt-1.5 h-60 w-full resize-none rounded-lg border border-zinc-800 bg-[#101012] p-3 font-mono text-[10px] leading-relaxed text-zinc-300 focus:outline-none focus:border-zinc-700 transition"
                   />
                 </label>
               </div>
-            </div>
 
-            {/* Right Column: n8n Style Input/Output Context Inspector */}
-            <div className="w-[45%] overflow-y-auto p-5 bg-zinc-950/30">
-              <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Giriş / Çıkış Değişkenleri</h4>
-              <div className="mt-3 space-y-3 font-mono text-[9px] leading-relaxed text-zinc-400">
-                <div className="rounded-lg bg-zinc-950/60 p-2.5 border border-zinc-850">
-                  <p className="text-zinc-500 font-bold mb-1">Giriş Değişkeni Sözdizimi:</p>
-                  <code className="text-emerald-400">{"{{ nodes.[NODE_ID].output.[FIELD] }}"}</code>
+              {/* Data and Variable Context view */}
+              <div className="w-[40%] rounded-xl bg-zinc-950/40 border border-zinc-800/60 p-4 overflow-y-auto space-y-3.5">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 border-b border-zinc-800/60 pb-2">Değişkenler Sözdizimi</h4>
+                
+                <div className="space-y-1">
+                  <p className="text-[9px] text-zinc-550 font-bold">Giriş Parametresi:</p>
+                  <code className="block rounded bg-zinc-950 p-2 text-[9px] text-emerald-400 font-mono select-all border border-zinc-900">
+                    {"{{ nodes." + selectedNode.id.split("-")[0] + ".output.FIELD }}"}
+                  </code>
                 </div>
-                <div className="rounded-lg bg-zinc-950/60 p-2.5 border border-zinc-850">
-                  <p className="text-zinc-500 font-bold mb-1">Aktif Node ID:</p>
-                  <code className="text-sky-400">{selectedNode.id}</code>
+
+                <div className="space-y-1">
+                  <p className="text-[9px] text-zinc-550 font-bold">Düğüm ID'si:</p>
+                  <code className="block rounded bg-zinc-950 p-2 text-[9px] text-sky-400 font-mono select-all border border-zinc-900">
+                    {selectedNode.id}
+                  </code>
                 </div>
               </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-zinc-850 mt-4 pt-4 flex justify-end">
+              <button
+                onClick={() => setShowDrawer(false)}
+                className="rounded-xl bg-zinc-100 px-5 py-2 text-xs font-bold text-zinc-900 hover:bg-zinc-200 transition"
+              >
+                Tamam
+              </button>
             </div>
           </div>
         </div>
@@ -963,7 +1019,7 @@ export default function AutomationBuilder() {
                       {theme.icon}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-zinc-200">{label}</p>
+                      <p className="text-xs font-bold text-zinc-250">{label}</p>
                       <p className="text-[9px] text-zinc-500 mt-0.5">{group}</p>
                     </div>
                   </button>
