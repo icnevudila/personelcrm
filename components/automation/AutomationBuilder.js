@@ -4,20 +4,28 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const CATALOG = [
   ["trigger.manual", "Manual Trigger", "Tetikleyiciler"],
+  ["trigger.webhook", "Webhook Trigger", "Tetikleyiciler"],
   ["data.set", "Set Fields", "Veri"],
   ["logic.if", "If", "Mantık"],
   ["http.request", "HTTP Request", "HTTP"],
   ["ai.chat", "AI Chat", "AI"],
+  ["ai.agent", "OpenAI Agent", "AI"],
+  ["slack.send", "Slack Message", "Slack"],
+  ["google.sheets", "Google Sheets", "GSheets"],
   ["telegram.send", "Send Message", "Telegram"],
   ["crm.create", "Create Record", "CRM"],
 ];
 
 const DEFAULT_CONFIG = {
   "trigger.manual": {},
+  "trigger.webhook": { path: "/webhook/start", method: "POST" },
   "data.set": { values: { field: "value" } },
   "logic.if": { left: "", operator: "not_empty", right: "" },
   "http.request": { method: "GET", url: "https://api.example.com", timeoutMs: 30000 },
   "ai.chat": { provider: "auto", systemPrompt: "", prompt: "" },
+  "ai.agent": { model: "gpt-4o", instructions: "", userPrompt: "" },
+  "slack.send": { webhookUrl: "", text: "" },
+  "google.sheets": { spreadsheetId: "", range: "Sheet1!A1", values: [] },
   "telegram.send": { chatId: "", text: "" },
   "crm.create": { tableId: "", values: {} },
 };
@@ -37,61 +45,71 @@ function createNode(type, index, customPos = null) {
   };
 }
 
-function statusClass(status) {
-  if (["succeeded", "partially_succeeded"].includes(status))
-    return "bg-emerald-950/40 text-emerald-300 border border-emerald-900/30";
-  if (["queued", "running", "waiting"].includes(status))
-    return "bg-amber-950/40 text-amber-300 border border-amber-900/30";
-  return "bg-rose-955/20 text-rose-300 border border-rose-900/30";
-}
-
-// Minimalist vector SVG icon definitions to replace amateur emojis
 const ICONS = {
   manual: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
     </svg>
   ),
+  webhook: (
+    <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20" />
+    </svg>
+  ),
   set: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   ),
   if: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <svg className="h-4 w-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
     </svg>
   ),
   http: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <svg className="h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
     </svg>
   ),
   ai: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <svg className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
     </svg>
   ),
+  slack: (
+    <svg className="h-4 w-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+  ),
+  sheets: (
+    <svg className="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    </svg>
+  ),
   telegram: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <svg className="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
     </svg>
   ),
   crm: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+    <svg className="h-4 w-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
   ),
 };
 
 const NODE_THEMES = {
-  "trigger.manual": { border: "border-l-amber-500", icon: ICONS.manual, color: "#f59e0b", label: "Manual Trigger" },
-  "data.set": { border: "border-l-emerald-500", icon: ICONS.set, color: "#10b981", label: "Set Fields" },
-  "logic.if": { border: "border-l-zinc-550", icon: ICONS.if, color: "#71717a", label: "If" },
-  "http.request": { border: "border-l-purple-500", icon: ICONS.http, color: "#a855f7", label: "HTTP Request" },
-  "ai.chat": { border: "border-l-indigo-500", icon: ICONS.ai, color: "#6366f1", label: "AI Chat" },
-  "telegram.send": { border: "border-l-sky-500", icon: ICONS.telegram, color: "#0ea5e9", label: "Send Message" },
-  "crm.create": { border: "border-l-rose-500", icon: ICONS.crm, color: "#f43f5e", label: "Create Record" },
+  "trigger.manual": { border: "border-l-amber-500", icon: ICONS.manual, label: "Manual Trigger" },
+  "trigger.webhook": { border: "border-l-emerald-500", icon: ICONS.webhook, label: "Webhook Trigger" },
+  "data.set": { border: "border-l-zinc-500", icon: ICONS.set, label: "Set Fields" },
+  "logic.if": { border: "border-l-zinc-650", icon: ICONS.if, label: "If logic" },
+  "http.request": { border: "border-l-purple-500", icon: ICONS.http, label: "HTTP Request" },
+  "ai.chat": { border: "border-l-indigo-500", icon: ICONS.ai, label: "AI Prompt Chat" },
+  "ai.agent": { border: "border-l-blue-500", icon: ICONS.ai, label: "OpenAI Agent" },
+  "slack.send": { border: "border-l-pink-500", icon: ICONS.slack, label: "Slack Message" },
+  "google.sheets": { border: "border-l-emerald-600", icon: ICONS.sheets, label: "Google Sheets" },
+  "telegram.send": { border: "border-l-sky-500", icon: ICONS.telegram, label: "Send Telegram" },
+  "crm.create": { border: "border-l-rose-500", icon: ICONS.crm, label: "Create CRM Row" },
 };
 
 export default function AutomationBuilder() {
@@ -103,6 +121,18 @@ export default function AutomationBuilder() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [execution, setExecution] = useState(null);
+
+  // Zoom & Pan Workspace states
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  // Hover Insertion points on edges
+  const [hoveredEdge, setHoveredEdge] = useState(null);
+  const [insertPos, setInsertPos] = useState({ x: 0, y: 0 });
+  const [insertingIntoEdge, setInsertingIntoEdge] = useState(null);
 
   // Layout and n8n States
   const [rightTab, setRightTab] = useState("config");
@@ -210,13 +240,36 @@ export default function AutomationBuilder() {
   function addNode(type, position = null) {
     const pos = position || { x: 150 + (definition.nodes.length % 3) * 220, y: 150 + Math.floor(definition.nodes.length / 3) * 120 };
     const node = createNode(type, definition.nodes.length, pos);
-    updateDefinition({ ...definition, nodes: [...definition.nodes, node] });
+    
+    let nextEdges = [...definition.edges];
+    if (insertingIntoEdge) {
+      // Split the edge into two: source -> node -> target
+      nextEdges = nextEdges.filter((e) => e.id !== insertingIntoEdge.id);
+      nextEdges.push({
+        id: `${insertingIntoEdge.source}-${node.id}`,
+        source: insertingIntoEdge.source,
+        target: node.id,
+        sourceHandle: "success",
+      });
+      nextEdges.push({
+        id: `${node.id}-${insertingIntoEdge.target}`,
+        source: node.id,
+        target: insertingIntoEdge.target,
+        sourceHandle: "success",
+      });
+      setInsertingIntoEdge(null);
+    }
+
+    updateDefinition({
+      ...definition,
+      nodes: [...definition.nodes, node],
+      edges: nextEdges,
+    });
     setSelected(node.id);
     setShowCommandPalette(false);
     setCommandSearch("");
   }
 
-  // Smooth dragging setup using direct style updates to bypass React lags
   function startDrag(event, node) {
     if (event.button !== 0) return;
     event.stopPropagation();
@@ -232,55 +285,91 @@ export default function AutomationBuilder() {
   }
 
   function moveDrag(event) {
-    if (!drag.current) return;
-    const deltaX = event.clientX - drag.current.startX;
-    const deltaY = event.clientY - drag.current.startY;
-    const newX = Math.max(16, drag.current.x + deltaX);
-    const newY = Math.max(16, drag.current.y + deltaY);
+    if (drag.current) {
+      const deltaX = (event.clientX - drag.current.startX) / zoom;
+      const deltaY = (event.clientY - drag.current.startY) / zoom;
+      const newX = Math.max(16, drag.current.x + deltaX);
+      const newY = Math.max(16, drag.current.y + deltaY);
 
-    // 1. Instantly update node DOM coordinates (60fps)
-    if (drag.current.element) {
-      drag.current.element.style.left = `${newX}px`;
-      drag.current.element.style.top = `${newY}px`;
-    }
+      if (drag.current.element) {
+        drag.current.element.style.left = `${newX}px`;
+        drag.current.element.style.top = `${newY}px`;
+      }
 
-    // 2. Instantly update connected path lines (SVG)
-    definition.edges.forEach((edge) => {
-      if (edge.source === drag.current.id || edge.target === drag.current.id) {
-        const pathEl = document.getElementById(`path-${edge.id}`);
-        if (pathEl) {
-          const sourceNode = definition.nodes.find((n) => n.id === edge.source);
-          const targetNode = definition.nodes.find((n) => n.id === edge.target);
-          if (sourceNode && targetNode) {
-            const isSource = edge.source === drag.current.id;
-            const sx = isSource ? newX + 176 : sourceNode.position.x + 176;
-            const sy = isSource ? newY + 28 : sourceNode.position.y + 28;
-            const tx = isSource ? targetNode.position.x : newX;
-            const ty = isSource ? targetNode.position.y + 28 : newY + 28;
-            const offset = Math.abs(tx - sx) * 0.5;
-            pathEl.setAttribute("d", `M ${sx} ${sy} C ${sx + offset} ${sy}, ${tx - offset} ${ty}, ${tx} ${ty}`);
+      definition.edges.forEach((edge) => {
+        if (edge.source === drag.current.id || edge.target === drag.current.id) {
+          const pathEl = document.getElementById(`path-${edge.id}`);
+          if (pathEl) {
+            const sourceNode = definition.nodes.find((n) => n.id === edge.source);
+            const targetNode = definition.nodes.find((n) => n.id === edge.target);
+            if (sourceNode && targetNode) {
+              const isSource = edge.source === drag.current.id;
+              const sx = isSource ? newX + 176 : sourceNode.position.x + 176;
+              const sy = isSource ? newY + 28 : sourceNode.position.y + 28;
+              const tx = isSource ? targetNode.position.x : newX;
+              const ty = isSource ? targetNode.position.y + 28 : newY + 28;
+              const offset = Math.abs(tx - sx) * 0.5;
+              pathEl.setAttribute("d", `M ${sx} ${sy} C ${sx + offset} ${sy}, ${tx - offset} ${ty}, ${tx} ${ty}`);
+            }
           }
         }
-      }
-    });
+      });
+      return;
+    }
+
+    if (isPanning) {
+      const dx = event.clientX - panStart.current.x;
+      const dy = event.clientY - panStart.current.y;
+      setPan({ x: panStart.current.panX + dx, y: panStart.current.panY + dy });
+      return;
+    }
+
+    if (connecting && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = (event.clientX - rect.left - pan.x) / zoom + canvasRef.current.scrollLeft;
+      const y = (event.clientY - rect.top - pan.y) / zoom + canvasRef.current.scrollTop;
+      setMousePos({ x, y });
+    }
   }
 
   function endDrag() {
-    if (!drag.current) return;
-    const node = definition.nodes.find((item) => item.id === drag.current.id);
-    if (node) {
-      const element = drag.current.element;
-      const finalX = parseInt(element.style.left, 10) || node.position.x;
-      const finalY = parseInt(element.style.top, 10) || node.position.y;
-      updateNode({ ...node, position: { x: finalX, y: finalY } });
+    if (drag.current) {
+      const node = definition.nodes.find((item) => item.id === drag.current.id);
+      if (node) {
+        const element = drag.current.element;
+        const finalX = parseInt(element.style.left, 10) || node.position.x;
+        const finalY = parseInt(element.style.top, 10) || node.position.y;
+        updateNode({ ...node, position: { x: finalX, y: finalY } });
+      }
+      drag.current = null;
     }
-    drag.current = null;
+    setIsPanning(false);
+  }
+
+  function startPan(event) {
+    if (event.button !== 0) return;
+    if (event.target.tagName !== "MAIN" && event.target.id !== "canvas-container") return;
+    setIsPanning(true);
+    panStart.current = {
+      x: event.clientX,
+      y: event.clientY,
+      panX: pan.x,
+      panY: pan.y,
+    };
+  }
+
+  function handleZoom(event) {
+    event.preventDefault();
+    const factor = event.deltaY < 0 ? 1.05 : 0.95;
+    setZoom((z) => Math.max(0.5, Math.min(1.5, z * factor)));
   }
 
   function connect(target) {
-    if (!connecting) return setConnecting(target.id);
-    if (connecting === target.id || definition.edges.some((edge) => edge.source === connecting && edge.target === target.id))
-      return setConnecting(null);
+    if (!connecting) return;
+    if (connecting === target.id || definition.edges.some((edge) => edge.source === connecting && edge.target === target.id)) {
+      setConnecting(null);
+      return;
+    }
     updateDefinition({
       ...definition,
       edges: [
@@ -320,7 +409,7 @@ export default function AutomationBuilder() {
     const data = await response.json();
     if (!response.ok) return setNotice(data.error || "Test başlatılamadı.");
     setExecution({ execution: data.execution, nodes: [], logs: [] });
-    setNotice(`Test execution ${data.execution.id.slice(0, 8)} kuyruğa alındı.`);
+    setNotice(`Test çalıştırılıyor...`);
   }
 
   async function activate() {
@@ -345,23 +434,29 @@ export default function AutomationBuilder() {
     }
   }
 
-  function clearEdges() {
+  function duplicateNode(node) {
+    const nextNode = createNode(node.type, definition.nodes.length, {
+      x: node.position.x + 40,
+      y: node.position.y + 40,
+    });
+    nextNode.config = clone(node.config);
+    nextNode.name = `${node.name} Copy`;
     updateDefinition({
       ...definition,
-      edges: [],
+      nodes: [...definition.nodes, nextNode],
     });
+    setSelected(nextNode.id);
   }
 
-  // Handle double-clicking canvas to open command palette
-  const handleCanvasDoubleClick = (e) => {
+  function handleCanvasDoubleClick(e) {
     if (e.target.tagName === "MAIN" || e.target.id === "canvas-container") {
       const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left + e.currentTarget.scrollLeft;
-      const y = e.clientY - rect.top + e.currentTarget.scrollTop;
-      setPalettePosition({ x: Math.max(16, x - 100), y: Math.max(16, y - 50) });
+      const x = (e.clientX - rect.left - pan.x) / zoom + e.currentTarget.scrollLeft;
+      const y = (e.clientY - rect.top - pan.y) / zoom + e.currentTarget.scrollTop;
+      setPalettePosition({ x, y });
       setShowCommandPalette(true);
     }
-  };
+  }
 
   // AI Assistant Chat trigger
   async function sendChatMessage() {
@@ -419,7 +514,7 @@ export default function AutomationBuilder() {
         nodeCount++;
         node.position = {
           x: 100 + (currentDef.nodes.length % 3) * 220,
-          y: 150 + Math.floor(currentDef.nodes.length / 3) * 120
+          y: 150 + Math.floor(currentDef.nodes.length / 3) * 120,
         };
         currentDef.nodes.push(node);
       } else if (action.type === "CONNECT_NODES") {
@@ -431,7 +526,7 @@ export default function AutomationBuilder() {
             id: `${actualSource.id}-${actualTarget.id}`,
             source: actualSource.id,
             target: actualTarget.id,
-            sourceHandle: "success"
+            sourceHandle: "success",
           });
         }
       } else if (action.type === "DELETE_NODE") {
@@ -494,6 +589,17 @@ export default function AutomationBuilder() {
     }
   }
 
+  function handleEdgeHover(edge) {
+    const sourceNode = definition.nodes.find((n) => n.id === edge.source);
+    const targetNode = definition.nodes.find((n) => n.id === edge.target);
+    if (sourceNode && targetNode) {
+      const mx = (sourceNode.position.x + 176 + targetNode.position.x) / 2;
+      const my = (sourceNode.position.y + 28 + targetNode.position.y + 28) / 2;
+      setInsertPos({ x: mx, y: my });
+      setHoveredEdge(edge);
+    }
+  }
+
   const filteredCatalog = CATALOG.filter(
     ([, label, group]) =>
       label.toLowerCase().includes(commandSearch.toLowerCase()) || group.toLowerCase().includes(commandSearch.toLowerCase())
@@ -542,6 +648,10 @@ export default function AutomationBuilder() {
             )}{" "}
             · {definition?.settings?.timezone || "Europe/Istanbul"}
           </p>
+        </div>
+        <div className="flex items-center gap-3 bg-zinc-900/40 px-3 py-1 rounded-xl border border-zinc-800 text-[10px] text-zinc-400">
+          <span>Zoom: {Math.round(zoom * 100)}%</span>
+          <button onClick={() => setZoom(1)} className="hover:text-white">Reset</button>
         </div>
         <select
           value={workflow.id}
@@ -603,11 +713,13 @@ export default function AutomationBuilder() {
         {/* Center - Visual Canvas (Dark n8n Theme) */}
         <main
           ref={canvasRef}
+          onPointerDown={startPan}
           onPointerMove={moveDrag}
           onPointerUp={endDrag}
           onDoubleClick={handleCanvasDoubleClick}
+          onWheel={handleZoom}
           id="canvas-container"
-          className="relative overflow-auto bg-[#101012] bg-[radial-gradient(circle_at_1px_1px,#222225_1px,transparent_0)] bg-[size:16px_16px] z-10"
+          className="relative overflow-hidden bg-[#101012] bg-[radial-gradient(circle_at_1px_1px,#222225_1px,transparent_0)] bg-[size:16px_16px] z-10 select-none cursor-grab active:cursor-grabbing"
         >
           {/* AI Co-Pilot Floating Input */}
           <div className="absolute left-6 right-6 top-6 z-20 mx-auto flex max-w-xl gap-2 rounded-2xl border border-zinc-850 bg-[#121214]/95 p-2 shadow-xl backdrop-blur-md">
@@ -629,8 +741,14 @@ export default function AutomationBuilder() {
             </button>
           </div>
 
-          {/* Node Connections Container */}
-          <div className="relative h-[900px] min-w-[1200px]">
+          {/* Node Connections Container (Zoom & Pan support via CSS Transform wrapper) */}
+          <div
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: "0 0",
+            }}
+            className="relative h-[900px] min-w-[1200px]"
+          >
             <svg className="absolute inset-0 h-full w-full pointer-events-none overflow-visible">
               {definition.edges.map((edge) => {
                 const source = definition.nodes.find((node) => node.id === edge.source);
@@ -652,17 +770,61 @@ export default function AutomationBuilder() {
                     stroke="#48484a"
                     strokeWidth="1.8"
                     strokeLinecap="round"
-                    className="opacity-70 transition-opacity hover:opacity-100"
+                    className="opacity-70 transition-opacity hover:opacity-100 pointer-events-auto cursor-pointer"
+                    onMouseMove={() => handleEdgeHover(edge)}
+                    onMouseLeave={() => setHoveredEdge(null)}
                   />
                 );
               })}
+
+              {/* Dynamic wire drawing preview */}
+              {connecting && (
+                <path
+                  d={(() => {
+                    const sourceNode = definition.nodes.find((n) => n.id === connecting);
+                    if (!sourceNode) return "";
+                    const sx = sourceNode.position.x + 176;
+                    const sy = sourceNode.position.y + 28;
+                    const tx = mousePos.x;
+                    const ty = mousePos.y;
+                    const offset = Math.abs(tx - sx) * 0.5;
+                    return `M ${sx} ${sy} C ${sx + offset} ${sy}, ${tx - offset} ${ty}, ${tx} ${ty}`;
+                  })()}
+                  fill="none"
+                  stroke="#ef6c00"
+                  strokeWidth="1.8"
+                  strokeDasharray="4,4"
+                  strokeLinecap="round"
+                />
+              )}
             </svg>
+
+            {/* Hover Edge Insertion Plus Button */}
+            {hoveredEdge && (
+              <button
+                style={{ left: insertPos.x - 10, top: insertPos.y - 10 }}
+                onMouseEnter={() => setHoveredEdge(hoveredEdge)}
+                onMouseLeave={() => setHoveredEdge(null)}
+                onClick={() => {
+                  setPalettePosition({ x: insertPos.x, y: insertPos.y });
+                  setInsertingIntoEdge(hoveredEdge);
+                  setShowCommandPalette(true);
+                }}
+                className="absolute z-30 h-5 w-5 rounded-full bg-orange-600 border border-orange-500 text-white flex items-center justify-center text-[10px] font-bold shadow-lg hover:scale-110 transition-transform pointer-events-auto"
+                title="Araya düğüm ekle"
+              >
+                +
+              </button>
+            )}
 
             {/* n8n Style Horizontal Capsule Nodes */}
             {definition.nodes.map((node) => {
               const theme = NODE_THEMES[node.type] || { icon: "📦", border: "border-l-zinc-650", label: node.name };
               const isSelected = selected === node.id;
-              const isExecuting = execution?.logs?.some((l) => l.details?.nodeId === node.id);
+              
+              // Resolve Node Execution Status Badges
+              const execLog = execution?.nodes?.find((n) => n.node_key === node.id);
+              const nodeStatus = execLog?.status;
 
               return (
                 <div
@@ -682,12 +844,12 @@ export default function AutomationBuilder() {
                     className={`relative w-44 h-14 rounded-lg bg-[#18181b] border border-zinc-850 border-l-4 flex items-center p-3 shadow-md gap-3 transition-all ${
                       theme.border
                     } ${isSelected ? "ring-1 ring-orange-500 scale-102 border-zinc-700 bg-zinc-900" : "hover:border-zinc-650"} ${
-                      isExecuting ? "ring-2 ring-emerald-500 animate-pulse" : ""
+                      nodeStatus === "running" ? "ring-2 ring-amber-500 animate-pulse" : ""
                     }`}
                   >
                     {/* Node Icon */}
                     <div className="h-7 w-7 rounded-md bg-[#101012] border border-zinc-800 flex items-center justify-center text-sm shrink-0">
-                      <span className="text-xs text-zinc-400 font-bold">{node.type.split(".")[0].toUpperCase().slice(0, 3)}</span>
+                      {theme.icon}
                     </div>
 
                     {/* Text Container */}
@@ -696,26 +858,55 @@ export default function AutomationBuilder() {
                       <p className="text-[8px] text-zinc-550 truncate mt-0.5">{theme.label}</p>
                     </div>
 
-                    {/* Action hover bubble to delete node */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNode(node.id);
-                      }}
-                      className="absolute -top-1.5 -right-1.5 hidden group-hover:flex items-center justify-center h-4.5 w-4.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-rose-500 text-[8px]"
-                      title="Node'u sil"
-                    >
-                      ✕
-                    </button>
+                    {/* Dynamic Status Badges */}
+                    {nodeStatus && (
+                      <span
+                        className={`absolute -top-2.5 -right-2 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase tracking-wider border shadow-md ${
+                          nodeStatus === "succeeded"
+                            ? "bg-emerald-950/90 text-emerald-400 border-emerald-800/40"
+                            : nodeStatus === "failed"
+                            ? "bg-rose-950/90 text-rose-300 border-rose-900/40"
+                            : "bg-amber-950/90 text-amber-300 border-amber-800/40 animate-pulse"
+                        }`}
+                      >
+                        {nodeStatus === "succeeded" ? "Ok" : nodeStatus === "failed" ? "Err" : "..."}
+                      </span>
+                    )}
+
+                    {/* Mini Hover Quick Action Tooltip Overlay */}
+                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center gap-1.5 bg-zinc-900/90 border border-zinc-800 px-2 py-1 rounded-md shadow-xl backdrop-blur-xs z-30 transition-all">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          duplicateNode(node);
+                        }}
+                        className="text-[9px] text-zinc-400 hover:text-white"
+                        title="Düğümü Kopyala"
+                      >
+                        Copy
+                      </button>
+                      <span className="text-zinc-700">|</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNode(node.id);
+                        }}
+                        className="text-[9px] text-zinc-400 hover:text-rose-400"
+                        title="Düğümü Sil"
+                      >
+                        Del
+                      </button>
+                    </div>
 
                     {/* Input/Output Tiny Port Handles */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setConnecting(node.id);
+                        setMousePos({ x: node.position.x + 176, y: node.position.y + 28 });
                       }}
                       className={`absolute -right-1 top-5 h-2.5 w-2.5 rounded-full border border-[#101012] transition-colors ${
-                        connecting === node.id ? "bg-orange-500 animate-ping" : "bg-zinc-600 hover:bg-orange-400"
+                        connecting === node.id ? "bg-orange-500 animate-ping" : "bg-zinc-600 hover:bg-orange-450"
                       }`}
                       aria-label="Çıkış bağla"
                     />
@@ -724,7 +915,7 @@ export default function AutomationBuilder() {
                         e.stopPropagation();
                         connect(node);
                       }}
-                      className="absolute -left-1.5 top-5 h-2.5 w-2.5 rounded-full border border-[#101012] bg-zinc-750 hover:bg-orange-400"
+                      className="absolute -left-1.5 top-5 h-2.5 w-2.5 rounded-full border border-[#101012] bg-zinc-750 hover:bg-orange-450"
                       aria-label="Giriş bağla"
                     />
                   </div>
@@ -866,7 +1057,7 @@ export default function AutomationBuilder() {
                     <span>AI</span>
                     <div>
                       <p className="font-bold text-zinc-200">AI Node</p>
-                      <p className="text-[8px] text-zinc-500 mt-0.5">Build autonomous agents, summarize docs, etc.</p>
+                      <p className="text-[8px] text-zinc-500 mt-0.5">Build autonomous agents, OpenAI Node, chat logs.</p>
                     </div>
                   </button>
 
@@ -928,7 +1119,7 @@ export default function AutomationBuilder() {
               </div>
 
               <div className="p-3.5 bg-zinc-950/20 border border-zinc-800 rounded-xl text-[9px] text-zinc-550 leading-relaxed">
-                Sürükle-bırak yaparken kasılma yaşanmaması için DOM optimizasyonu yapıldı (60fps). Herhangi bir düğümü çift tıklayarak parametre çekmecesini alttan kaydırabilirsiniz.
+                Boş tuval alanına sol tıklayıp kaydırarak pan yapabilir, mouse tekerleğiyle yakınlaştırıp uzaklaşabilirsiniz. Bağlantı çizgilerinin ortasındaki + butonundan araya düğüm ekleyebilirsiniz.
               </div>
             </div>
           )}
@@ -988,7 +1179,7 @@ export default function AutomationBuilder() {
 
               {/* Data and Variable Context view */}
               <div className="w-[40%] rounded-xl bg-zinc-950/40 border border-zinc-800/60 p-4 overflow-y-auto space-y-3.5">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 border-b border-zinc-800/60 pb-2">Değişkenler Sözdizimi</h4>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-550 border-b border-zinc-800/60 pb-2">Değişkenler Sözdizimi</h4>
                 
                 <div className="space-y-1">
                   <p className="text-[9px] text-zinc-550 font-bold">Giriş Parametresi:</p>
@@ -1029,6 +1220,7 @@ export default function AutomationBuilder() {
                 onClick={() => {
                   setShowCommandPalette(false);
                   setCommandSearch("");
+                  setInsertingIntoEdge(null);
                 }}
                 className="text-zinc-400 hover:text-zinc-200"
               >
@@ -1058,7 +1250,7 @@ export default function AutomationBuilder() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-bold text-zinc-250">{label}</p>
-                      <p className="text-[9px] text-zinc-500 mt-0.5">{group}</p>
+                      <p className="text-[9px] text-zinc-550 mt-0.5">{group}</p>
                     </div>
                   </button>
                 );
