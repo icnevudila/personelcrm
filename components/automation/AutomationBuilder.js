@@ -32,7 +32,7 @@ function createNode(type, index, customPos = null) {
     id: `${type.replace(/[^a-z]/g, "")}-${Date.now()}-${index}`,
     type,
     name: label,
-    position: customPos || { x: 100 + (index % 3) * 180, y: 150 + Math.floor(index / 3) * 140 },
+    position: customPos || { x: 100 + (index % 3) * 220, y: 150 + Math.floor(index / 3) * 120 },
     config: clone(DEFAULT_CONFIG[type] || {}),
   };
 }
@@ -46,13 +46,13 @@ function statusClass(status) {
 }
 
 const NODE_THEMES = {
-  "trigger.manual": { border: "border-amber-500", glow: "shadow-amber-500/20", icon: "⚡", color: "#f59e0b" },
-  "data.set": { border: "border-emerald-500", glow: "shadow-emerald-500/20", icon: "📋", color: "#10b981" },
-  "logic.if": { border: "border-zinc-500", glow: "shadow-zinc-500/20", icon: "🔀", color: "#71717a" },
-  "http.request": { border: "border-purple-500", glow: "shadow-purple-500/20", icon: "🌐", color: "#a855f7" },
-  "ai.chat": { border: "border-indigo-500", glow: "shadow-indigo-500/20", icon: "🧠", color: "#6366f1" },
-  "telegram.send": { border: "border-sky-500", glow: "shadow-sky-500/20", icon: "✈️", color: "#0ea5e9" },
-  "crm.create": { border: "border-rose-500", glow: "shadow-rose-500/20", icon: "👤", color: "#f43f5e" },
+  "trigger.manual": { border: "border-l-amber-500", icon: "⚡", color: "#f59e0b", label: "Manual Trigger" },
+  "data.set": { border: "border-l-emerald-500", icon: "📋", color: "#10b981", label: "Set Fields" },
+  "logic.if": { border: "border-l-zinc-500", icon: "🔀", color: "#71717a", label: "If" },
+  "http.request": { border: "border-l-purple-500", icon: "🌐", color: "#a855f7", label: "HTTP Request" },
+  "ai.chat": { border: "border-l-indigo-500", icon: "🧠", color: "#6366f1", label: "AI Chat" },
+  "telegram.send": { border: "border-l-sky-500", icon: "✈️", color: "#0ea5e9", label: "Send Message" },
+  "crm.create": { border: "border-l-rose-500", icon: "👤", color: "#f43f5e", label: "Create Record" },
 };
 
 export default function AutomationBuilder() {
@@ -66,7 +66,7 @@ export default function AutomationBuilder() {
   const [execution, setExecution] = useState(null);
 
   // Layout and n8n States
-  const [rightTab, setRightTab] = useState("ai");
+  const [rightTab, setRightTab] = useState("config");
   const [showDrawer, setShowDrawer] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
@@ -169,7 +169,7 @@ export default function AutomationBuilder() {
   }
 
   function addNode(type, position = null) {
-    const pos = position || { x: 150 + (definition.nodes.length % 3) * 180, y: 150 + Math.floor(definition.nodes.length / 3) * 140 };
+    const pos = position || { x: 150 + (definition.nodes.length % 3) * 220, y: 150 + Math.floor(definition.nodes.length / 3) * 120 };
     const node = createNode(type, definition.nodes.length, pos);
     updateDefinition({ ...definition, nodes: [...definition.nodes, node] });
     setSelected(node.id);
@@ -214,10 +214,10 @@ export default function AutomationBuilder() {
           const targetNode = definition.nodes.find((n) => n.id === edge.target);
           if (sourceNode && targetNode) {
             const isSource = edge.source === drag.current.id;
-            const sx = isSource ? newX + 64 : sourceNode.position.x + 64;
-            const sy = isSource ? newY + 32 : sourceNode.position.y + 32;
+            const sx = isSource ? newX + 176 : sourceNode.position.x + 176;
+            const sy = isSource ? newY + 28 : sourceNode.position.y + 28;
             const tx = isSource ? targetNode.position.x : newX;
-            const ty = isSource ? targetNode.position.y + 32 : newY + 32;
+            const ty = isSource ? targetNode.position.y + 28 : newY + 28;
             const offset = Math.abs(tx - sx) * 0.5;
             pathEl.setAttribute("d", `M ${sx} ${sy} C ${sx + offset} ${sy}, ${tx - offset} ${ty}, ${tx} ${ty}`);
           }
@@ -505,35 +505,22 @@ export default function AutomationBuilder() {
       </header>
 
       {/* Main Workspace Area */}
-      <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(480px,1fr)_340px] relative">
-        {/* Left Side - Node Library */}
-        <aside className="flex flex-col border-r border-zinc-800 bg-[#121214]">
-          <div className="p-4 border-b border-zinc-800">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Node Kütüphanesi</p>
+      <div className="grid min-h-0 flex-1 grid-cols-[60px_1fr_340px] relative">
+        {/* Slim Left Navigation Panel (n8n Style) */}
+        <aside className="flex flex-col items-center justify-between py-4 border-r border-zinc-800 bg-[#121214] text-zinc-550">
+          <div className="space-y-4 w-full flex flex-col items-center">
+            <button className="h-8 w-8 rounded-lg bg-zinc-900 text-zinc-200 flex items-center justify-center text-xs font-extrabold shadow-md border border-zinc-800 hover:text-white" title="Personal">
+              P
+            </button>
+            <button className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-zinc-850 hover:text-zinc-300" title="Overview">
+              📁
+            </button>
+            <button className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-zinc-850 hover:text-zinc-300 relative" title="AI Assistant">
+              🧠
+              <span className="absolute -top-1.5 -right-1.5 bg-purple-600 text-[6px] font-bold text-white px-1 py-0.5 rounded">AI</span>
+            </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-1">
-            {CATALOG.map(([type, label, group]) => {
-              const theme = NODE_THEMES[type] || { icon: "📦" };
-              return (
-                <button
-                  key={type}
-                  onClick={() => addNode(type)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-zinc-850 bg-zinc-900/40 p-2 text-left transition hover:bg-zinc-800/40 hover:border-zinc-800"
-                >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 border border-zinc-800 text-xs shadow-inner">
-                    {theme.icon}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-zinc-300">{label}</p>
-                    <p className="text-[9px] text-zinc-550 mt-0.5">{group}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <div className="p-4 border-t border-zinc-800 bg-zinc-950/20 text-[9px] leading-relaxed text-zinc-500">
-            💡 Düğümleri birleştirmek için sol/sağ kenarlarındaki bağlantı noktalarını sırayla seçebilirsiniz. Çift tıklayarak hızlı arama panelini açabilirsiniz.
-          </div>
+          <div className="text-[10px] font-mono text-zinc-600">v1.0</div>
         </aside>
 
         {/* Center - Visual Canvas (Dark n8n Theme) */}
@@ -543,7 +530,7 @@ export default function AutomationBuilder() {
           onPointerUp={endDrag}
           onDoubleClick={handleCanvasDoubleClick}
           id="canvas-container"
-          className="relative overflow-auto bg-[#141416] bg-[radial-gradient(circle_at_1px_1px,#2d2d30_1.2px,transparent_0)] bg-[size:18px_18px]"
+          className="relative overflow-auto bg-[#101012] bg-[radial-gradient(circle_at_1px_1px,#222225_1px,transparent_0)] bg-[size:16px_16px]"
         >
           {/* AI Co-Pilot Floating Input */}
           <div className="absolute left-6 right-6 top-6 z-10 mx-auto flex max-w-xl gap-2 rounded-2xl border border-zinc-850 bg-[#121214]/95 p-2 shadow-xl backdrop-blur-md">
@@ -573,13 +560,11 @@ export default function AutomationBuilder() {
                 const target = definition.nodes.find((node) => node.id === edge.target);
                 if (!source || !target) return null;
 
-                const sx = source.position.x + 64;
-                const sy = source.position.y + 32;
+                const sx = source.position.x + 176;
+                const sy = source.position.y + 28;
                 const tx = target.position.x;
-                const ty = target.position.y + 32;
+                const ty = target.position.y + 28;
                 const offset = Math.abs(tx - sx) * 0.5;
-
-                const theme = NODE_THEMES[source.type] || { color: "#a1a1aa" };
 
                 return (
                   <path
@@ -587,8 +572,8 @@ export default function AutomationBuilder() {
                     id={`path-${edge.id}`}
                     d={`M ${sx} ${sy} C ${sx + offset} ${sy}, ${tx - offset} ${ty}, ${tx} ${ty}`}
                     fill="none"
-                    stroke={theme.color}
-                    strokeWidth="2"
+                    stroke="#48484a"
+                    strokeWidth="1.8"
                     strokeLinecap="round"
                     className="opacity-70 transition-opacity hover:opacity-100"
                   />
@@ -596,9 +581,9 @@ export default function AutomationBuilder() {
               })}
             </svg>
 
-            {/* n8n Style Mini Icon Nodes */}
+            {/* n8n Style Horizontal Capsule Nodes */}
             {definition.nodes.map((node) => {
-              const theme = NODE_THEMES[node.type] || { icon: "📦", border: "border-zinc-650" };
+              const theme = NODE_THEMES[node.type] || { icon: "📦", border: "border-l-zinc-650", label: node.name };
               const isSelected = selected === node.id;
               const isExecuting = execution?.logs?.some((l) => l.details?.nodeId === node.id);
 
@@ -607,7 +592,7 @@ export default function AutomationBuilder() {
                   key={node.id}
                   id={`node-${node.id}`}
                   style={{ left: node.position.x, top: node.position.y }}
-                  className="absolute flex flex-col items-center group cursor-grab active:cursor-grabbing"
+                  className="absolute flex items-center group cursor-grab active:cursor-grabbing"
                   onPointerDown={(event) => startDrag(event, node)}
                   onDoubleClick={(event) => {
                     event.stopPropagation();
@@ -615,15 +600,24 @@ export default function AutomationBuilder() {
                     setShowDrawer(true);
                   }}
                 >
-                  {/* Square Node Container */}
+                  {/* Capsule Card Node */}
                   <div
-                    className={`relative w-16 h-16 rounded-2xl bg-[#1e1e22] border-2 flex items-center justify-center shadow-lg transition-all ${
+                    className={`relative w-44 h-14 rounded-lg bg-[#18181b] border border-zinc-800 border-l-4 flex items-center p-3 shadow-md gap-3 transition-all ${
                       theme.border
-                    } ${isSelected ? "ring-2 ring-zinc-100 ring-offset-2 ring-offset-zinc-950 scale-105" : "hover:border-zinc-400"} ${
-                      isExecuting ? "animate-pulse" : ""
+                    } ${isSelected ? "ring-1 ring-orange-500 scale-102 border-zinc-700 bg-zinc-900" : "hover:border-zinc-600"} ${
+                      isExecuting ? "ring-2 ring-emerald-500 animate-pulse" : ""
                     }`}
                   >
-                    <span className="text-2xl">{theme.icon}</span>
+                    {/* Node Icon */}
+                    <div className="h-7 w-7 rounded-md bg-[#101012] border border-zinc-800 flex items-center justify-center text-sm shrink-0">
+                      {theme.icon}
+                    </div>
+
+                    {/* Text Container */}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold text-zinc-200 truncate">{node.name}</p>
+                      <p className="text-[8px] text-zinc-550 truncate mt-0.5">{theme.label}</p>
+                    </div>
 
                     {/* Action hover bubble to delete node */}
                     <button
@@ -631,20 +625,20 @@ export default function AutomationBuilder() {
                         e.stopPropagation();
                         deleteNode(node.id);
                       }}
-                      className="absolute -top-2.5 -right-2.5 hidden group-hover:flex items-center justify-center h-5 w-5 rounded-full bg-rose-600 border border-rose-500 text-white text-[9px] font-bold hover:bg-rose-500"
+                      className="absolute -top-1.5 -right-1.5 hidden group-hover:flex items-center justify-center h-4.5 w-4.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-rose-500 text-[8px]"
                       title="Node'u sil"
                     >
                       ✕
                     </button>
 
-                    {/* Connection handles */}
+                    {/* Input/Output Tiny Port Handles */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setConnecting(node.id);
                       }}
-                      className={`absolute -right-1.5 top-6 h-3.5 w-3.5 rounded-full border border-[#141416] transition-colors ${
-                        connecting === node.id ? "bg-amber-400 animate-ping" : "bg-zinc-600 hover:bg-zinc-400"
+                      className={`absolute -right-1 top-5 h-2.5 w-2.5 rounded-full border border-[#101012] transition-colors ${
+                        connecting === node.id ? "bg-orange-500 animate-ping" : "bg-zinc-600 hover:bg-orange-400"
                       }`}
                       aria-label="Çıkış bağla"
                     />
@@ -653,95 +647,89 @@ export default function AutomationBuilder() {
                         e.stopPropagation();
                         connect(node);
                       }}
-                      className="absolute -left-1.5 top-6 h-3.5 w-3.5 rounded-full border border-[#141416] bg-zinc-700 hover:bg-zinc-500"
+                      className="absolute -left-1.5 top-5 h-2.5 w-2.5 rounded-full border border-[#101012] bg-zinc-750 hover:bg-orange-400"
                       aria-label="Giriş bağla"
                     />
                   </div>
-
-                  {/* n8n Style label below node */}
-                  <span className="mt-1.5 text-[9px] font-bold text-zinc-400 tracking-wide text-center w-24 truncate">
-                    {node.name}
-                  </span>
                 </div>
               );
             })}
           </div>
         </main>
 
-        {/* Right Side - AI Copilot Panel */}
+        {/* Right Side - n8n Copilot Sidebar */}
         <aside className="flex flex-col border-l border-zinc-800 bg-[#121214]">
-          <div className="flex border-b border-zinc-800">
-            <button
-              onClick={() => setRightTab("ai")}
-              className={`flex-1 py-3 text-xs font-bold transition-all ${
-                rightTab === "ai"
-                  ? "border-b-2 border-zinc-100 text-zinc-200"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              🤖 AI Ajanı Chat
-            </button>
-            <button
-              onClick={() => setRightTab("config")}
-              className={`flex-1 py-3 text-xs font-bold transition-all ${
-                rightTab === "config"
-                  ? "border-b-2 border-zinc-100 text-zinc-200"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              ⚙️ Düğüm Ayarları
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 min-h-0 flex flex-col justify-between">
-            {rightTab === "ai" ? (
-              <div className="flex flex-col h-full justify-between min-h-0">
-                <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[300px]">
-                  {chatMessages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`rounded-xl p-3 text-xs leading-relaxed max-w-[85%] ${
-                        msg.role === "user"
-                          ? "bg-zinc-800 text-zinc-250 self-end ml-auto"
-                          : "bg-blue-950/20 text-blue-300 border border-blue-900/30"
-                      }`}
-                    >
-                      <p className="font-semibold text-[8px] uppercase tracking-wider opacity-60 mb-1">
-                        {msg.role === "user" ? "Sen" : "AI Ajanı"}
-                      </p>
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
-                    </div>
-                  ))}
-                  {chatLoading && (
-                    <div className="rounded-xl p-3 text-xs bg-blue-950/10 text-blue-400 w-[60%] animate-pulse">
-                      Ajan düşünüyor...
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 border-t border-zinc-800 pt-3 flex gap-2">
-                  <input
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Ajan ile konuşun..."
-                    className="flex-1 rounded-xl border border-zinc-850 bg-zinc-900/50 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-550 focus:outline-none"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") sendChatMessage();
-                    }}
-                  />
-                  <button
-                    onClick={sendChatMessage}
-                    disabled={chatLoading || !chatInput.trim()}
-                    className="rounded-xl bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-900 hover:bg-zinc-250 disabled:opacity-50"
-                  >
-                    Gönder
-                  </button>
-                </div>
+          {selectedNode ? (
+            /* Selected Node Settings tabs */
+            <div className="flex-1 flex flex-col h-full justify-between min-h-0">
+              <div className="flex border-b border-zinc-800 shrink-0">
+                <button
+                  onClick={() => setRightTab("config")}
+                  className={`flex-1 py-3 text-xs font-bold transition-all ${
+                    rightTab === "config" ? "border-b-2 border-zinc-100 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  ⚙️ Düğüm Ayarları
+                </button>
+                <button
+                  onClick={() => setRightTab("ai")}
+                  className={`flex-1 py-3 text-xs font-bold transition-all ${
+                    rightTab === "ai" ? "border-b-2 border-zinc-100 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  🤖 AI Ajanı Chat
+                </button>
               </div>
-            ) : (
-              <div className="space-y-5">
-                {selectedNode ? (
-                  <div className="space-y-4">
+
+              <div className="flex-1 overflow-y-auto p-4 min-h-0">
+                {rightTab === "ai" ? (
+                  /* Chat */
+                  <div className="flex flex-col h-full justify-between min-h-0">
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[300px]">
+                      {chatMessages.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          className={`rounded-xl p-3 text-xs leading-relaxed max-w-[85%] ${
+                            msg.role === "user"
+                              ? "bg-zinc-800 text-zinc-250 self-end ml-auto"
+                              : "bg-blue-950/20 text-blue-300 border border-blue-900/30"
+                          }`}
+                        >
+                          <p className="font-semibold text-[8px] uppercase tracking-wider opacity-60 mb-1">
+                            {msg.role === "user" ? "Sen" : "AI Ajanı"}
+                          </p>
+                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                        </div>
+                      ))}
+                      {chatLoading && (
+                        <div className="rounded-xl p-3 text-xs bg-blue-950/10 text-blue-400 w-[60%] animate-pulse">
+                          Ajan düşünüyor...
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4 border-t border-zinc-800 pt-3 flex gap-2">
+                      <input
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Ajan ile konuşun..."
+                        className="flex-1 rounded-xl border border-zinc-850 bg-zinc-900/50 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-650 focus:outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") sendChatMessage();
+                        }}
+                      />
+                      <button
+                        onClick={sendChatMessage}
+                        disabled={chatLoading || !chatInput.trim()}
+                        className="rounded-xl bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-900 hover:bg-zinc-250 disabled:opacity-50"
+                      >
+                        Gönder
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Node parameters */
+                  <div className="space-y-5">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-xs font-bold text-zinc-250">{selectedNode.name}</h3>
@@ -749,9 +737,9 @@ export default function AutomationBuilder() {
                       </div>
                       <button
                         onClick={() => deleteNode(selectedNode.id)}
-                        className="rounded-lg border border-rose-900 px-2 py-1 text-[10px] font-semibold text-rose-400 hover:bg-rose-950/20"
+                        className="rounded-lg border border-rose-900 px-2 py-1 text-[10px] font-semibold text-rose-400 hover:bg-rose-955/20"
                       >
-                        Node'u Sil
+                        Sil
                       </button>
                     </div>
 
@@ -761,7 +749,7 @@ export default function AutomationBuilder() {
                         <input
                           value={selectedNode.name}
                           onChange={(event) => updateNode({ ...selectedNode, name: event.target.value })}
-                          className="mt-1 w-full rounded-lg border border-zinc-850 bg-zinc-900/40 px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                          className="mt-1.5 w-full rounded-lg border border-zinc-850 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none"
                         />
                       </label>
 
@@ -776,47 +764,97 @@ export default function AutomationBuilder() {
                               /* parsed on save */
                             }
                           }}
-                          className="mt-1 h-44 w-full resize-y rounded-lg border border-zinc-850 bg-[#141416] p-2 font-mono text-[9px] leading-relaxed text-zinc-300 focus:outline-none focus:border-zinc-700"
+                          className="mt-1 h-44 w-full resize-y rounded-lg border border-zinc-850 bg-[#141416] p-2 font-mono text-[9px] leading-relaxed text-zinc-300 focus:outline-none"
                         />
                       </label>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <p className="text-xs text-zinc-550">Ayarları düzenlemek için tuval üzerindeki bir node'u seçin.</p>
-                    {definition.edges.length > 0 && (
-                      <button
-                        onClick={clearEdges}
-                        className="mt-3 inline-flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-800"
-                      >
-                        Tüm Bağlantıları Temizle
-                      </button>
-                    )}
-                  </div>
                 )}
+              </div>
+            </div>
+          ) : (
+            /* n8n Style "What happens next?" menu when no node is selected */
+            <div className="p-4 space-y-4 flex flex-col h-full justify-between min-h-0">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-250">What happens next?</h3>
+                  <p className="text-[9px] text-zinc-500 mt-0.5">Akışa eklemek için bir düğüm kategorisine tıklayın:</p>
+                </div>
 
-                <div className="border-t border-zinc-800 pt-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Çalışma Logları (Execution)</p>
-                  {execution ? (
-                    <div className={`mt-3 rounded-xl p-3 border ${statusClass(execution.execution.status)}`}>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold uppercase">{execution.execution.status}</p>
-                        <span className="text-[9px] opacity-70">
-                          {execution.execution.duration_ms ? `${execution.execution.duration_ms}ms` : ""}
-                        </span>
-                      </div>
-                      <p className="mt-1 font-mono text-[9px] opacity-60">{execution.execution.id}</p>
-                      <pre className="mt-3 max-h-40 overflow-auto rounded-lg bg-zinc-950/50 p-2.5 font-mono text-[9px] leading-relaxed">
-                        {JSON.stringify(execution.logs?.length ? execution.logs : execution.nodes, null, 2)}
-                      </pre>
+                <div className="space-y-2 text-xs">
+                  <button
+                    onClick={() => addNode("ai.chat")}
+                    className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
+                  >
+                    <span>🧠</span>
+                    <div>
+                      <p className="font-bold text-zinc-200">AI Node</p>
+                      <p className="text-[8px] text-zinc-500 mt-0.5">Build autonomous agents, summarize docs, etc.</p>
                     </div>
-                  ) : (
-                    <p className="mt-2 text-xs text-zinc-550">Akışı çalıştırdığınızda çalışma raporu burada görünecektir.</p>
-                  )}
+                  </button>
+
+                  <button
+                    onClick={() => addNode("telegram.send")}
+                    className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
+                  >
+                    <span>✈️</span>
+                    <div>
+                      <p className="font-bold text-zinc-200">Action in an app</p>
+                      <p className="text-[8px] text-zinc-500 mt-0.5">Do something in Telegram or Google Sheets.</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => addNode("data.set")}
+                    className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
+                  >
+                    <span>📋</span>
+                    <div>
+                      <p className="font-bold text-zinc-200">Data transformation</p>
+                      <p className="text-[8px] text-zinc-500 mt-0.5">Manipulate, filter or convert payload fields.</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => addNode("logic.if")}
+                    className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
+                  >
+                    <span>🔀</span>
+                    <div>
+                      <p className="font-bold text-zinc-200">Flow</p>
+                      <p className="text-[8px] text-zinc-500 mt-0.5">Branch, logic gates, merge or loop the flow.</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => addNode("http.request")}
+                    className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
+                  >
+                    <span>🌐</span>
+                    <div>
+                      <p className="font-bold text-zinc-200">Core</p>
+                      <p className="text-[8px] text-zinc-500 mt-0.5">Run code, make HTTP requests, webhooks.</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => addNode("trigger.manual")}
+                    className="w-full flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-2.5 text-left hover:bg-zinc-800"
+                  >
+                    <span>⚡</span>
+                    <div>
+                      <p className="font-bold text-zinc-200">Add trigger</p>
+                      <p className="text-[8px] text-zinc-500 mt-0.5">Manual or webhook trigger events to start.</p>
+                    </div>
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
+
+              <div className="p-3.5 bg-zinc-950/20 border border-zinc-800 rounded-xl text-[9px] text-zinc-500 leading-relaxed">
+                💬 Sürükle-bırak yaparken kasılma yaşanmaması için DOM optimizasyonu yapıldı (60fps). Herhangi bir düğümü çift tıklayarak parametre çekmecesini alttan kaydırabilirsiniz.
+              </div>
+            </div>
+          )}
         </aside>
       </div>
 
@@ -863,7 +901,7 @@ export default function AutomationBuilder() {
                         /* ignored */
                       }
                     }}
-                    className="mt-1 h-36 w-full resize-none rounded-lg border border-zinc-850 bg-zinc-950 p-2.5 font-mono text-[10px] leading-relaxed text-zinc-300 focus:outline-none focus:border-zinc-700"
+                    className="mt-1 h-36 w-full resize-none rounded-lg border border-zinc-855 bg-zinc-950 p-2.5 font-mono text-[10px] leading-relaxed text-zinc-300 focus:outline-none focus:border-zinc-700"
                   />
                 </label>
               </div>
