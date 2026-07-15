@@ -392,6 +392,9 @@ export default function AutomationBuilder() {
           if (actionData.action) {
             handleAgentAction(actionData.action);
           }
+          if (actionData.actions && Array.isArray(actionData.actions)) {
+            runAgentActions(actionData.actions);
+          }
           text = text.replace(jsonRegex, "").trim();
         } catch (e) {
           console.error("Action parsing error:", e);
@@ -404,6 +407,41 @@ export default function AutomationBuilder() {
     } finally {
       setChatLoading(false);
     }
+  }
+
+  function runAgentActions(actionsList) {
+    let currentDef = clone(definition);
+    let nodeCount = currentDef.nodes.length;
+    
+    actionsList.forEach((action) => {
+      if (action.type === "ADD_NODE") {
+        const node = createNode(action.nodeType, nodeCount);
+        nodeCount++;
+        node.position = {
+          x: 100 + (currentDef.nodes.length % 3) * 220,
+          y: 150 + Math.floor(currentDef.nodes.length / 3) * 120
+        };
+        currentDef.nodes.push(node);
+      } else if (action.type === "CONNECT_NODES") {
+        const actualSource = currentDef.nodes.find(n => n.id === action.sourceId || n.id.startsWith(action.sourceId.split("-")[0]) || n.type === action.sourceId);
+        const actualTarget = currentDef.nodes.find(n => n.id === action.targetId || n.id.startsWith(action.targetId.split("-")[0]) || n.type === action.targetId);
+        
+        if (actualSource && actualTarget) {
+          currentDef.edges.push({
+            id: `${actualSource.id}-${actualTarget.id}`,
+            source: actualSource.id,
+            target: actualTarget.id,
+            sourceHandle: "success"
+          });
+        }
+      } else if (action.type === "DELETE_NODE") {
+        currentDef.nodes = currentDef.nodes.filter(n => n.id !== action.nodeId);
+        currentDef.edges = currentDef.edges.filter(e => e.source !== action.nodeId && e.target !== action.nodeId);
+      }
+    });
+
+    updateDefinition(currentDef);
+    setNotice(`AI Ajanı ${actionsList.length} adet eylemi gerçekleştirdi.`);
   }
 
   function handleAgentAction(action) {
@@ -720,11 +758,11 @@ export default function AutomationBuilder() {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 min-h-0">
+              <div className="flex-1 flex flex-col min-h-0">
                 {rightTab === "ai" ? (
                   /* Chat */
-                  <div className="flex flex-col h-full justify-between min-h-0">
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[300px]">
+                  <div className="flex-1 flex flex-col min-h-0 justify-between">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 pr-1 min-h-0">
                       {chatMessages.map((msg, idx) => (
                         <div
                           key={idx}
@@ -747,7 +785,7 @@ export default function AutomationBuilder() {
                       )}
                     </div>
 
-                    <div className="mt-4 border-t border-zinc-800 pt-3 flex gap-2">
+                    <div className="p-4 border-t border-zinc-800 flex gap-2 shrink-0 bg-[#121214]">
                       <input
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
@@ -768,7 +806,7 @@ export default function AutomationBuilder() {
                   </div>
                 ) : (
                   /* Node parameters */
-                  <div className="space-y-5">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-5">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-xs font-bold text-zinc-250">{selectedNode.name}</h3>

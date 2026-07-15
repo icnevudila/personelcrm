@@ -29,35 +29,33 @@ export async function POST(request) {
     - Mevcut Durum (JSON): ${JSON.stringify(context?.state || {})}
 
     [YAPABİLECEĞİN EYLEMLER (ACTIONS)]:
-    Eğer konuşma esnasında kullanıcının talebi doğrultusunda ekrana bir şey eklemen veya güncellemen gerekirse, yanıtının en sonuna SADECE şu formatta bir JSON bloğu ekle (kullanıcı bunu arayüzde görmeyecek, sistem otomatik icra edecek):
+    Konuşma esnasında kullanıcının talebi doğrultusunda ekrana bir veya birden fazla şey eklemek/güncellemek istersen, yanıtının en sonuna SADECE şu formatta bir JSON bloğu ekle:
     
     Aksiyon Tipleri:
     1. Workflow Ekranı İçin:
-       - Node Ekle: { "action": { "type": "ADD_NODE", "nodeType": "trigger.manual" | "data.set" | "logic.if" | "http.request" | "ai.chat" | "telegram.send" | "crm.create" } }
-       - Node Bağla: { "action": { "type": "CONNECT_NODES", "sourceId": "...", "targetId": "..." } }
-       - Node Sil: { "action": { "type": "DELETE_NODE", "nodeId": "..." } }
+       - Node Ekle: { "type": "ADD_NODE", "nodeType": "trigger.manual" | "data.set" | "logic.if" | "http.request" | "ai.chat" | "telegram.send" | "crm.create" }
+       - Node Bağla: { "type": "CONNECT_NODES", "sourceId": "...", "targetId": "..." } (Bağlarken eklediğin düğümlerin tam ID'lerini veya düğüm tiplerini örn: "trigger.manual", "ai.chat" referans verebilirsin)
+       - Node Sil: { "type": "DELETE_NODE", "nodeId": "..." }
     
     2. Social OS Ekranı İçin:
-       - Taslak Ekle: { "action": { "type": "CREATE_SOCIAL_DRAFT", "platform": "x" | "instagram", "title": "Taslak Başlığı", "body": { "text": "Asla baştan savma olmayan, detaylı, profesyonelce hazırlanmış Türkçe paylaşım metni..." }, "mediaPrompt": "Detailed English image prompt (e.g. 'A close up of a neon glowing smartphone, highly detailed, 3d render') - NEVER use Turkish here." } }
+       - Taslak Ekle: { "type": "CREATE_SOCIAL_DRAFT", "platform": "x" | "instagram", "title": "Taslak Başlığı", "body": { "text": "Paylaşım metni..." }, "mediaPrompt": "Detailed English image prompt..." }
+
+    [BİRDEN FAZLA EYLEM (BATCH)]:
+    Eğer kullanıcı "sıfırdan akış oluştur" veya "şunu şunu yapan akış yap" derse, tüm adımları tek seferde çizmek için "actions" dizisi kullanmalısın:
+    \`\`\`json
+    {
+      "actions": [
+        { "type": "ADD_NODE", "nodeType": "trigger.manual" },
+        { "type": "ADD_NODE", "nodeType": "ai.chat" },
+        { "type": "CONNECT_NODES", "sourceId": "trigger.manual", "targetId": "ai.chat" }
+      ]
+    }
+    \`\`\`
 
     [YANIT FORMATI]:
     Yanıtın iki kısımdan oluşmalıdır:
     1. Kullanıcıya yazacağın açıklayıcı, cana yakın ve yol gösterici Türkçe mesaj (Markdown formatında).
-    2. Eğer bir aksiyon tetiklenecekse, mesajın bittiği yerde en altta \`\`\`json şeklinde aksiyon nesnesi.
-    
-    Örnek:
-    Merhaba! İstediğin gibi X platformu için detaylı bir taslak hazırlıyorum.
-    \`\`\`json
-    {
-      "action": {
-        "type": "CREATE_SOCIAL_DRAFT",
-        "platform": "x",
-        "title": "Yeni SaaS Lansmanı",
-        "body": { "text": "Yeni projemiz nihayet yayında! 🚀 Bizi desteklemek ve detayları incelemek için hemen web sitemizi ziyaret edin. Geri bildirimlerinizi heyecanla bekliyoruz!" },
-        "mediaPrompt": "A sleek dark modern workspace flatlay with code on screens, neon blue accents, high resolution photo"
-      }
-    }
-    \`\`\`
+    2. En altta \`\`\`json şeklinde aksiyon nesnesi (action veya actions içeren).
 
     Kullanıcıya karşı samimi ve profesyonel ol.`;
 
